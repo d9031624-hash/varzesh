@@ -1,462 +1,259 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>طراحی بدن خودکار — SVG AI-like</title>
-
-<!-- فونت -->
-<link href="https://cdn.fontcdn.ir/Font/Persian/B Nazanin/BNazanin.css" rel="stylesheet">
+<title>محاسبه وضعیت بدن</title>
 
 <style>
-  :root{
-    --bg:#0f1720; --card:#0b1220; --accent:#00c4c4; --muted:#9aa4b2;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    min-height:100vh;
-    background:linear-gradient(180deg,#071224 0%, #0b1220 100%);
-    color:#e6eef6;
-    font-family:"B Nazanin", BNazanin, sans-serif;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    user-select:none;
-  }
-  .wrap{
-    max-width:980px;
-    margin:28px auto;
-    padding:18px;
-  }
-  .card{
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:16px;
-    padding:18px;
-    box-shadow:0 12px 40px rgba(2,6,23,0.6);
-    border:1px solid rgba(255,255,255,0.02);
-  }
-  h1{
-    margin:0 0 12px 0;
-    font-weight:800;
-    font-size:1.4rem;
-    color:var(--accent);
-    text-align:center;
-  }
+    @font-face {
+        font-family: 'BNazanin';
+        src: url('https://cdn.fontcdn.ir/Font/Persian/B Nazanin/BNazanin.woff2') format('woff2');
+    }
 
-  .controls{
-    display:flex;
-    gap:12px;
-    flex-wrap:wrap;
-    justify-content:center;
-    margin-bottom:12px;
-  }
-  .control{
-    min-width:180px;
-    flex:1 1 180px;
-  }
-  label{
-    display:block;
-    font-weight:800;
-    color:#cfeff0;
-    margin-bottom:6px;
-    font-size:0.95rem;
-  }
-  input[type=number], select {
-    width:100%;
-    padding:10px 12px;
-    border-radius:10px;
-    border:1px solid rgba(255,255,255,0.06);
-    background:#061018;
-    color:#e6eef6;
-    font-weight:700;
-    font-size:1rem;
-  }
-  .actions{
-    display:flex;
-    gap:12px;
-    margin-top:12px;
-    justify-content:center;
-  }
-  button{
-    padding:12px 16px;
-    border-radius:12px;
-    border:0;
-    background:var(--accent);
-    color:#021018;
-    font-weight:900;
-    cursor:pointer;
-    font-size:1rem;
-  }
-  button.secondary{
-    background:transparent;
-    color:var(--muted);
-    border:1px solid rgba(255,255,255,0.03);
-  }
+    body {
+        margin: 0;
+        background: linear-gradient(135deg, #232931, #393E46);
+        font-family: 'BNazanin', sans-serif;
+        color: #EEE;
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        overflow-x: hidden;
+    }
 
-  .display{
-    margin-top:18px;
-    display:flex;
-    gap:14px;
-    flex-wrap:wrap;
-    align-items:flex-start;
-    justify-content:center;
-  }
+    /* سراسری – قفل انتخاب متن */
+    * {
+        user-select: none;
+        -webkit-user-select: none;
+    }
 
-  .panel{
-    background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.006));
-    border-radius:14px;
-    padding:14px;
-    width:320px;
-    max-width:92vw;
-    box-shadow:inset 0 0 18px rgba(0,0,0,0.6);
-    border:1px solid rgba(255,255,255,0.02);
-    text-align:center;
-  }
-  .panel h3{
-    margin:2px 0 10px 0;
-    font-size:1rem;
-    font-weight:900;
-    color:#dff;
-  }
-  .metrics{
-    font-weight:800;
-    color:#cfeff0;
-    margin-bottom:8px;
-    font-size:0.95rem;
-  }
-  .svg-wrap{
-    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.004));
-    padding:10px;
-    border-radius:12px;
-  }
+    .app-container {
+        width: 90%;
+        max-width: 420px;
+        margin: 30px auto;
+        padding: 25px;
+        background: #1E2024;
+        border-radius: 22px;
+        box-shadow: 0 0 35px rgba(0,0,0,0.55);
+        text-align: center;
+        animation: fadeIn 0.7s ease;
+    }
 
-  /* small note */
-  .note{margin-top:10px;color:var(--muted);font-size:0.86rem;text-align:center;font-weight:700;}
+    h1 {
+        font-size: 26px;
+        margin-bottom: 25px;
+        font-weight: bold;
+        color: #00ADB5;
+    }
 
-  /* disable text selection for whole page */
-  *{ -webkit-user-select:none; -ms-user-select:none; user-select:none; -webkit-touch-callout:none; }
+    .input-group {
+        margin-bottom: 18px;
+        text-align: right;
+    }
 
-  @media (min-width:900px){
-    .display{justify-content:space-between}
-    .panel{width:45%}
-  }
-  /* smooth svg animations */
-  .body-svg *{ transition: all 500ms cubic-bezier(.2,.8,.2,1); transform-origin:50% 50%; }
+    label {
+        font-size: 19px;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 14px;
+        border: none;
+        font-size: 18px;
+        font-family: 'BNazanin';
+        background: #2C3036;
+        color: #EEE;
+        outline: none;
+        transition: 0.2s;
+    }
+
+    input:focus, select:focus {
+        background: #3B3F45;
+        transform: scale(1.02);
+    }
+
+    button {
+        width: 100%;
+        padding: 14px;
+        background: #00ADB5;
+        border: none;
+        border-radius: 16px;
+        font-size: 22px;
+        font-weight: bold;
+        font-family: 'BNazanin';
+        margin-top: 20px;
+        cursor: pointer;
+        transition: 0.25s;
+        color: #FFF;
+    }
+
+    button:hover {
+        background: #0199a0;
+        transform: scale(1.03);
+    }
+
+    .result-box {
+        margin-top: 25px;
+        padding: 20px;
+        background: #0F1114;
+        border-radius: 18px;
+        font-size: 19px;
+        line-height: 1.9;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+        font-weight: bold;
+    }
+
+    @keyframes fadeIn {
+        from {opacity: 0; transform: translateY(15px);}
+        to {opacity: 1; transform: translateY(0);}
+    }
+
+    /* ریسپانسیو */
+    @media (min-width: 768px) {
+        .app-container { max-width: 500px; }
+    }
+    @media (min-width: 1024px) {
+        .app-container { max-width: 550px; }
+    }
 </style>
 
-<!-- راست کلیک و میانبرها را مسدود می‌کنیم -->
+<!-- قفل راست کلیک -->
 <script>
-  document.addEventListener('contextmenu', e => e.preventDefault());
-  document.addEventListener('keydown', e => {
-    // block ctrl/cmd+S, ctrl/cmd+U, ctrl/cmd+Shift+I
-    if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'u' || (e.shiftKey && e.key.toLowerCase()==='i'))) {
-      e.preventDefault();
-    }
-  });
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+        if (e.ctrlKey || e.key === "F12") e.preventDefault();
+    });
 </script>
+
 </head>
 <body>
 
-<div class="wrap">
-  <div class="card">
-    <h1>طراحی برداری بدن — خودکار (بدون عکس)</h1>
+<div class="app-container">
+    <h1>محاسبه وضعیت بدن</h1>
 
-    <div class="controls">
-      <div class="control">
-        <label>سن (سال)</label>
-        <input id="age" type="number" min="10" max="120" value="30">
-      </div>
-      <div class="control">
-        <label>قد (سانتی‌متر)</label>
-        <input id="height" type="number" min="100" max="230" value="175">
-      </div>
-      <div class="control">
-        <label>وزن (کیلوگرم)</label>
-        <input id="weight" type="number" min="30" max="220" step="0.1" value="75">
-      </div>
-      <div class="control">
-        <label>جنسیت</label>
+    <div class="input-group">
+        <label>سن:</label>
+        <input type="number" id="age" placeholder="مثال: 25">
+    </div>
+
+    <div class="input-group">
+        <label>قد (سانتی‌متر):</label>
+        <input type="number" id="height" placeholder="مثال: 170">
+    </div>
+
+    <div class="input-group">
+        <label>وزن (کیلوگرم):</label>
+        <input type="number" id="weight" placeholder="مثال: 70">
+    </div>
+
+    <div class="input-group">
+        <label>جنسیت:</label>
         <select id="gender">
-          <option value="male">مرد</option>
-          <option value="female">زن</option>
+            <option value="male">مرد</option>
+            <option value="female">زن</option>
         </select>
-      </div>
     </div>
 
-    <div class="actions">
-      <button id="calcBtn">محاسبه و رسم بدن</button>
-      <button id="animToggle" class="secondary">انیمیشن: روشن</button>
+    <button onclick="calculate()">محاسبه</button>
+
+    <div class="result-box" id="result">
+        نتیجه اینجا نمایش داده می‌شود
     </div>
-
-    <div class="display" id="displayArea">
-      <div class="panel">
-        <h3>بدن فعلی</h3>
-        <div class="metrics" id="metricsCurrent">—</div>
-        <div class="svg-wrap" id="svgCurrent"></div>
-        <div class="note">تصویر برداری‌شده براساس BMI و نسبت‌های استاندارد</div>
-      </div>
-
-      <div class="panel">
-        <h3>بدن ایده‌آل</h3>
-        <div class="metrics" id="metricsIdeal">—</div>
-        <div class="svg-wrap" id="svgIdeal"></div>
-        <div class="note">بدن ایده‌آل براساس BMI ایده‌آل جنسیت</div>
-      </div>
-    </div>
-
-  </div>
 </div>
 
 <script>
-/*
-  الگوریتم:
-  - از BMI به نسبت های عرض سینه، کمر، باسن، ران و ضخامت بازو نگاشت می‌کنیم
-  - برای مرد و زن پارامترهای پایه متفاوتند
-  - SVG ساخته می‌شود با قطعات ساده: سر، گردن، شانه، تنه، باسن، ران، ساق، بازو
-  - همه چیز برداری است و به اندازهٔ viewport مقیاس می‌خورد
-  - انیمیشن نرم هنگام به‌روزرسانی
-*/
+function calculate() {
+    let age = parseInt(document.getElementById("age").value);
+    let height = parseInt(document.getElementById("height").value) / 100;
+    let weight = parseFloat(document.getElementById("weight").value);
+    let gender = document.getElementById("gender").value;
 
-const calcBtn = document.getElementById('calcBtn');
-const animToggle = document.getElementById('animToggle');
-let enableAnim = true;
-
-animToggle.addEventListener('click', ()=>{
-  enableAnim = !enableAnim;
-  animToggle.textContent = enableAnim ? 'انیمیشن: روشن' : 'انیمیشن: خاموش';
-  document.querySelectorAll('.body-svg *').forEach(el=>{
-    el.style.transition = enableAnim ? 'all 500ms cubic-bezier(.2,.8,.2,1)' : 'none';
-  });
-});
-
-calcBtn.addEventListener('click', renderBoth);
-
-// Helper clamp
-function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-
-// Mapping BMI -> shape parameters
-function bmiToParams(bmi, age, gender){
-  // baseline: bmi 22 => neutral
-  const base = 22;
-  const scale = bmi / base; // >1 => wider, <1 => slimmer
-
-  // gender modifiers
-  const male = (gender === 'male');
-
-  // shoulder factor, hip factor, waist reduction factor, limb thickness
-  // tune these constants for realistic silhouettes
-  const shoulderBase = male ? 1.15 : 1.02;
-  const hipBase = male ? 0.98 : 1.08;
-  const waistSlimness = male ? 0.95 : 0.92;
-
-  // adjust by scale but keep within realistic bounds
-  const shoulders = clamp(shoulderBase * (0.9 + 0.6 * scale), 0.8, 1.6);
-  const hips = clamp(hipBase * (0.85 + 0.6 * scale), 0.75, 1.7);
-  const waist = clamp(waistSlimness * (0.65 + 0.6 * scale), 0.55, 1.5);
-  const limb = clamp(0.6 + 0.6 * (scale - 1.0), 0.4, 1.6); // limb thickness
-  const neck = clamp(0.85 + 0.35 * (scale - 1.0), 0.7, 1.4);
-  const belly = clamp(0.6 + 0.9 * (scale - 1.0), 0.4, 1.8);
-
-  // slight age effect: older -> a bit more belly
-  const ageBelly = 1 + clamp((age - 30) / 120, 0, 0.6);
-
-  return {
-    shoulders, hips, waist: waist * ageBelly * belly,
-    limb, neck
-  };
-}
-
-// create an SVG string for a body with given params and scale & label color
-function makeBodySVG(params, color = '#7FD3D3', scale = 1.0, gender = 'male'){
-  // svg viewbox width and height chosen for portrait body
-  const w = 240, h = 480;
-  // center x
-  const cx = w/2;
-
-  // sizes
-  const headR = 26 * scale * (params.neck * 0.9);
-  const neckW = 18 * scale * params.neck;
-  const shoulderW = 80 * scale * params.shoulders;
-  const waistW = 54 * scale * params.waist;
-  const hipW = 70 * scale * params.hips;
-  const torsoH = 130 * scale;
-  const upperLegH = 130 * scale;
-  const lowerLegH = 110 * scale;
-  const armLen = 120 * scale;
-  const armW = 18 * scale * params.limb;
-  const thighW = 28 * scale * params.limb;
-
-  // y positions
-  let y = 40; // top padding
-  const headCy = y + headR;
-  y += headR*2 + 6;
-  const neckTopY = y;
-  const shoulderY = neckTopY + 6;
-  const torsoTopY = shoulderY + 6;
-  const torsoBottomY = torsoTopY + torsoH;
-  const hipY = torsoBottomY + 8;
-  const kneeY = hipY + upperLegH*0.5;
-  const ankleY = hipY + upperLegH + lowerLegH;
-
-  // gender subtle shapes
-  const isFemale = gender === 'female';
-
-  // Paths: we will define symmetric left and right with bezier curves
-  // torso path (from left shoulder down to left hip -> right hip -> right shoulder)
-  const leftShoulderX = cx - shoulderW/2;
-  const rightShoulderX = cx + shoulderW/2;
-  const leftWaistX = cx - waistW/2;
-  const rightWaistX = cx + waistW/2;
-  const leftHipX = cx - hipW/2;
-  const rightHipX = cx + hipW/2;
-
-  // create SVG with shapes
-  const svg = `
-    <svg class="body-svg" viewBox="0 0 ${w} ${h}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-      <defs>
-        <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#000" flood-opacity="0.5"/>
-        </filter>
-      </defs>
-
-      <!-- head -->
-      <circle cx="${cx}" cy="${headCy}" r="${headR}" fill="${color}" opacity="0.95" filter="url(#softShadow)"/>
-      <!-- neck -->
-      <rect x="${cx-neckW/2}" y="${neckTopY}" width="${neckW}" height="12" rx="${neckW/2}" fill="${color}" opacity="0.95"/>
-      <!-- torso -->
-      <path d="
-        M ${leftShoulderX} ${shoulderY}
-        C ${leftShoulderX-8} ${shoulderY+18}, ${leftWaistX-6} ${torsoTopY + torsoH*0.3}, ${leftWaistX} ${torsoTopY + torsoH*0.5}
-        C ${leftWaistX} ${torsoTopY + torsoH*0.82}, ${leftHipX+6} ${torsoBottomY - 6}, ${leftHipX} ${hipY}
-        L ${rightHipX} ${hipY}
-        C ${rightHipX-6} ${torsoBottomY - 6}, ${rightWaistX} ${torsoTopY + torsoH*0.82}, ${rightWaistX} ${torsoTopY + torsoH*0.5}
-        C ${rightWaistX+6} ${torsoTopY + torsoH*0.3}, ${rightShoulderX+8} ${shoulderY+18}, ${rightShoulderX} ${shoulderY}
-        Z
-      " fill="${color}" opacity="0.95"/>
-
-      <!-- arms -->
-      <!-- left arm (upper + lower) -->
-      <path d="
-        M ${leftShoulderX-6} ${shoulderY+6}
-        C ${leftShoulderX-12} ${shoulderY+24}, ${leftShoulderX-18} ${shoulderY+60}, ${leftShoulderX-18} ${shoulderY+92}
-        C ${leftShoulderX-18} ${shoulderY+110}, ${leftShoulderX-10} ${shoulderY+120}, ${leftShoulderX-6} ${shoulderY+130}
-        L ${leftShoulderX+6} ${shoulderY+130}
-        C ${leftShoulderX+2} ${shoulderY+120}, ${leftShoulderX+12} ${shoulderY+106}, ${leftShoulderX+12} ${shoulderY+92}
-        C ${leftShoulderX+12} ${shoulderY+60}, ${leftShoulderX+6} ${shoulderY+24}, ${leftShoulderX-6} ${shoulderY+6}
-        Z
-      " fill="${color}" opacity="0.92"/>
-
-      <!-- right arm -->
-      <path d="
-        M ${rightShoulderX+6} ${shoulderY+6}
-        C ${rightShoulderX+12} ${shoulderY+24}, ${rightShoulderX+18} ${shoulderY+60}, ${rightShoulderX+18} ${rightShoulderX+92}
-        C ${rightShoulderX+18} ${shoulderY+110}, ${rightShoulderX+10} ${shoulderY+120}, ${rightShoulderX+6} ${shoulderY+130}
-        L ${rightShoulderX-6} ${shoulderY+130}
-        C ${rightShoulderX-2} ${shoulderY+120}, ${rightShoulderX-12} ${shoulderY+106}, ${rightShoulderX-12} ${shoulderY+92}
-        C ${rightShoulderX-12} ${shoulderY+60}, ${rightShoulderX-6} ${shoulderY+24}, ${rightShoulderX+6} ${shoulderY+6}
-        Z
-      " fill="${color}" opacity="0.92"/>
-
-      <!-- legs: left -->
-      <path d="
-        M ${leftHipX+8} ${hipY}
-        C ${leftHipX+4} ${hipY + upperLegH*0.25}, ${leftHipX+10} ${hipY + upperLegH*0.55}, ${leftHipX+8} ${hipY + upperLegH}
-        C ${leftHipX+10} ${hipY + upperLegH + 12}, ${leftHipX+18} ${hipY + upperLegH + lowerLegH - 8}, ${leftHipX+22} ${ankleY}
-        L ${leftHipX+36} ${ankleY}
-        C ${leftHipX+30} ${hipY + upperLegH + lowerLegH - 8}, ${leftHipX+34} ${hipY + upperLegH + 12}, ${leftHipX+34} ${hipY + upperLegH}
-        C ${leftHipX+34} ${hipY + upperLegH*0.55}, ${leftHipX+28} ${hipY + upperLegH*0.25}, ${leftHipX+24} ${hipY}
-        Z
-      " fill="${color}" opacity="0.95"/>
-
-      <!-- legs: right (mirror) -->
-      <path d="
-        M ${rightHipX-8} ${hipY}
-        C ${rightHipX-4} ${hipY + upperLegH*0.25}, ${rightHipX-10} ${hipY + upperLegH*0.55}, ${rightHipX-8} ${hipY + upperLegH}
-        C ${rightHipX-10} ${hipY + upperLegH + 12}, ${rightHipX-18} ${hipY + upperLegH + lowerLegH - 8}, ${rightHipX-22} ${ankleY}
-        L ${rightHipX-36} ${ankleY}
-        C ${rightHipX-30} ${hipY + upperLegH + lowerLegH - 8}, ${rightHipX-34} ${hipY + upperLegH + 12}, ${rightHipX-34} ${hipY + upperLegH}
-        C ${rightHipX-34} ${hipY + upperLegH*0.55}, ${rightHipX-28} ${hipY + upperLegH*0.25}, ${rightHipX-24} ${hipY}
-        Z
-      " fill="${color}" opacity="0.95"/>
-
-      <!-- subtle waist line / contour -->
-      <ellipse cx="${cx}" cy="${torsoTopY + torsoH*0.52}" rx="${waistW/2}" ry="6" fill="rgba(0,0,0,0.06)"/>
-    </svg>
-  `;
-}
-
-// render a single panel: given element id, bmi, age, gender, label
-function renderPanel(containerId, bmi, age, gender, label){
-  const el = document.getElementById(containerId);
-  const params = bmiToParams(bmi, age, gender);
-
-  // choose color by bmi: green -> normal, amber -> over, red -> obese, cyan -> thin
-  let color = '#7FD3D3';
-  if (bmi < 18.5) color = '#a0e7ff';
-  else if (bmi < 25) color = '#7FD3D3';
-  else if (bmi < 30) color = '#ffcc66';
-  else color = '#ff7b7b';
-
-  // scale factor to fit svg area based on height (approx)
-  // taller people slightly larger
-  const scale = clamp((age*0 + 1.0), 0.92, 1.12);
-
-  const svgMarkup = makeBodySVG(params, color, 1.0, gender);
-
-  // metrics text
-  const mi = `
-    BMI: <strong>${bmi.toFixed(1)}</strong><br>
-    جنسیت: <strong>${gender === 'male' ? 'مرد' : 'زن'}</strong>
-  `;
-
-  // set metrics and svg
-  el.previousElementSibling && (el.previousElementSibling.innerHTML = mi); // metrics element above .svg-wrap
-  el.innerHTML = svgMarkup;
-
-  // optional: animate a little pop
-  if(enableAnim){
-    const svgEl = el.querySelector('svg');
-    if(svgEl){
-      svgEl.style.transform = 'scale(0.94)';
-      setTimeout(()=> svgEl.style.transform = 'scale(1)', 20);
+    if (!age || !height || !weight) {
+        document.getElementById("result").innerText = "لطفا همه مقادیر را وارد کنید.";
+        return;
     }
-  }
+
+    let bmi = weight / (height * height);
+    let bodyFat;
+
+    if (gender === "male") {
+        bodyFat = 1.20 * bmi + 0.23 * age - 16.2;
+    } else {
+        bodyFat = 1.20 * bmi + 0.23 * age - 5.4;
+    }
+
+    bodyFat = Math.max(0, bodyFat);
+
+    let idealBMI = gender === "male" ? 22 : 21;
+    let idealWeight = idealBMI * (height * height);
+    let diff = weight - idealWeight;
+
+    let status =
+        bmi < 18.5 ? "کم‌وزن" :
+        bmi < 25 ? "نرمال" :
+        bmi < 30 ? "اضافه وزن" :
+        "چاق";
+
+    document.getElementById("result").innerHTML = `
+        <b>BMI:</b> ${bmi.toFixed(1)}<br>
+        <b>درصد چربی بدن:</b> ${bodyFat.toFixed(1)}%<br>
+        <b>وضعیت:</b> ${status}<br>
+        <b>وزن ایده‌آل:</b> ${idealWeight.toFixed(1)} کیلوگرم<br>
+        <b>اختلاف وزن:</b> ${diff.toFixed(1)} کیلوگرم
+    `;
 }
-
-// render both current and ideal
-function renderBoth(){
-  const age = parseInt(document.getElementById('age').value) || 30;
-  const height = parseFloat(document.getElementById('height').value) || 175;
-  const weight = parseFloat(document.getElementById('weight').value) || 75;
-  const gender = document.getElementById('gender').value || 'male';
-
-  const h = height/100;
-  const bmi = weight / (h*h);
-
-  // ideal BMI by gender
-  const idealBMI = gender === 'male' ? 22 : 21;
-  const idealWeight = idealBMI * (h*h);
-  const diff = weight - idealWeight;
-
-  // update metric panels text (they are siblings of .svg-wrap)
-  document.getElementById('metricsCurrent').innerHTML = `
-    وزن: <strong>${weight.toFixed(1)} kg</strong><br>
-    BMI: <strong>${bmi.toFixed(1)}</strong>
-  `;
-  document.getElementById('metricsIdeal').innerHTML = `
-    وزن هدف: <strong>${idealWeight.toFixed(1)} kg</strong><br>
-    BMI هدف: <strong>${idealBMI}</strong>
-  `;
-
-  // render svgs
-  renderPanel('svgCurrent', bmi, age, gender, 'فعلی');
-  renderPanel('svgIdeal', idealBMI, age, gender, 'ایده‌آل');
-}
-
-// initial render
-renderBoth();
-
 </script>
 
+    
+    
+    
+    
+    
+    <!-- غیرفعال کردن همه حالت‌های زوم -->
+<script>
+    // جلوگیری از زوم با دو انگشت (pinch)
+    document.addEventListener('touchmove', function(event) {
+        if (event.scale !== 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+
+    // جلوگیری از زوم با دابل‌تپ
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+        let now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+
+    // جلوگیری از زوم با Ctrl + Mouse Wheel در لپ‌تاپ
+    window.addEventListener('wheel', function(event) {
+        if (event.ctrlKey) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+
+    // جلوگیری از زوم با Ctrl + +/-   
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=')) {
+            e.preventDefault();
+        }
+    });
+</script>
+
+
+
+
+
+
+
+    
 </body>
 </html>
