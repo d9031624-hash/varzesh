@@ -6,15 +6,116 @@
 <title>محاسبه وضعیت بدن</title>
 
 <style>
-body {
-    font-family: "B Nazanin", sans-serif;
-    background: #0b1220;
-    color: #fff;
-    text-align: center;
-    padding: 20px;
+@font-face {
+    font-family: 'BNazanin';
+    src: url('https://cdn.fontcdn.ir/Font/Persian/B Nazanin/BNazanin.woff2') format('woff2');
 }
 
-/* لودینگ صفحه */
+body {
+    margin: 0;
+    background: linear-gradient(135deg, #232931, #393E46);
+    font-family: 'BNazanin', sans-serif;
+    color: #EEE;
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    overflow-x: hidden;
+}
+
+* {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* کانتینر برنامه */
+.app-container {
+    width: 90%;
+    max-width: 420px;
+    margin: 30px auto;
+    padding: 25px;
+    background: #1E2024;
+    border-radius: 22px;
+    box-shadow: 0 0 35px rgba(0,0,0,0.55);
+    text-align: center;
+    animation: fadeIn 0.7s ease;
+}
+
+h1 {
+    font-size: 26px;
+    margin-bottom: 25px;
+    font-weight: bold;
+    color: #00ADB5;
+}
+
+.input-group {
+    margin-bottom: 18px;
+    text-align: right;
+}
+
+label {
+    font-size: 19px;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 6px;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 14px;
+    border: none;
+    font-size: 18px;
+    font-family: 'BNazanin';
+    background: #2C3036;
+    color: #EEE;
+    outline: none;
+    transition: 0.2s;
+}
+
+input:focus, select:focus {
+    background: #3B3F45;
+    transform: scale(1.02);
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background: #00ADB5;
+    border: none;
+    border-radius: 16px;
+    font-size: 22px;
+    font-weight: bold;
+    font-family: 'BNazanin';
+    margin-top: 20px;
+    cursor: pointer;
+    transition: 0.25s;
+    color: #FFF;
+}
+
+button:hover {
+    background: #0199a0;
+    transform: scale(1.03);
+}
+
+.result-box {
+    margin-top: 25px;
+    padding: 20px;
+    background: #0F1114;
+    border-radius: 18px;
+    font-size: 19px;
+    line-height: 1.9;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+    font-weight: bold;
+    min-height: 130px;
+}
+
+/* انیمیشن fadeIn */
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(15px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+/* لودینگ AI */
 #loadingScreen {
     position: fixed;
     top: 0; left: 0;
@@ -26,7 +127,6 @@ body {
     z-index: 9999;
 }
 
-/* انیمیشن دایره‌ها */
 .loader {
     display: flex;
     gap: 10px;
@@ -48,32 +148,21 @@ body {
     to { transform: translateY(-15px); opacity: 1; }
 }
 
-/* دکمه */
-button {
-    padding: 12px 18px;
-    font-size: 18px;
-    background: #00c4c4;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: bold;
-    color: #021018;
+/* ریسپانسیو */
+@media (min-width: 768px) {
+    .app-container { max-width: 500px; }
 }
-
-/* نتیجه */
-#result {
-    margin-top: 25px;
-    font-size: 20px;
-    font-weight: bold;
+@media (min-width: 1024px) {
+    .app-container { max-width: 550px; }
 }
 </style>
 
 <!-- قفل راست کلیک -->
 <script>
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-        if (e.ctrlKey || e.key === "F12") e.preventDefault();
-    });
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+    if (e.ctrlKey || e.key === "F12") e.preventDefault();
+});
 </script>
 
 </head>
@@ -105,45 +194,45 @@ button {
         </select>
     </div>
 
-    <button onclick="calculate()">محاسبه</button>
+    <button id="calcBtn">محاسبه</button>
 
     <div class="result-box" id="result">
         نتیجه اینجا نمایش داده می‌شود
     </div>
 </div>
 
+<!-- لودینگ -->
+<div id="loadingScreen">
+    <div class="loader">
+        <span></span><span></span><span></span>
+    </div>
+</div>
+
 <script>
+// تابع محاسبه BMI و وضعیت بدن
 function calculate() {
     let age = parseInt(document.getElementById("age").value);
-    let height = parseInt(document.getElementById("height").value) / 100;
+    let height = parseInt(document.getElementById("height").value)/100;
     let weight = parseFloat(document.getElementById("weight").value);
     let gender = document.getElementById("gender").value;
 
-    if (!age || !height || !weight) {
-        document.getElementById("result").innerText = "لطفا همه مقادیر را وارد کنید.";
+    if(!age || !height || !weight) {
+        document.getElementById("result").innerText = "لطفاً همه مقادیر را وارد کنید.";
         return;
     }
 
-    let bmi = weight / (height * height);
-    let bodyFat;
-
-    if (gender === "male") {
-        bodyFat = 1.20 * bmi + 0.23 * age - 16.2;
-    } else {
-        bodyFat = 1.20 * bmi + 0.23 * age - 5.4;
-    }
-
+    let bmi = weight / (height*height);
+    let bodyFat = gender === "male" ? 1.20*bmi + 0.23*age - 16.2 : 1.20*bmi + 0.23*age - 5.4;
     bodyFat = Math.max(0, bodyFat);
 
     let idealBMI = gender === "male" ? 22 : 21;
-    let idealWeight = idealBMI * (height * height);
+    let idealWeight = idealBMI * (height*height);
     let diff = weight - idealWeight;
 
-    let status =
-        bmi < 18.5 ? "کم‌وزن" :
-        bmi < 25 ? "نرمال" :
-        bmi < 30 ? "اضافه وزن" :
-        "چاق";
+    let status = bmi < 18.5 ? "کم‌وزن" :
+                 bmi < 25 ? "نرمال" :
+                 bmi < 30 ? "اضافه وزن" :
+                             "چاق";
 
     document.getElementById("result").innerHTML = `
         <b>BMI:</b> ${bmi.toFixed(1)}<br>
@@ -153,115 +242,24 @@ function calculate() {
         <b>اختلاف وزن:</b> ${diff.toFixed(1)} کیلوگرم
     `;
 }
-</script>
 
-    
-    
-    
-    
-    
-    <!-- غیرفعال کردن همه حالت‌های زوم -->
-<script>
-    // جلوگیری از زوم با دو انگشت (pinch)
-    document.addEventListener('touchmove', function(event) {
-        if (event.scale !== 1) {
-            event.preventDefault();
-        }
-    }, { passive: false });
-
-    // جلوگیری از زوم با دابل‌تپ
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function(event) {
-        let now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
-            event.preventDefault();
-        }
-        lastTouchEnd = now;
-    }, false);
-
-    // جلوگیری از زوم با Ctrl + Mouse Wheel در لپ‌تاپ
-    window.addEventListener('wheel', function(event) {
-        if (event.ctrlKey) {
-            event.preventDefault();
-        }
-    }, { passive: false });
-
-    // جلوگیری از زوم با Ctrl + +/-   
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=')) {
-            e.preventDefault();
-        }
-    });
-</script>
-
-
-
-<style>
-/* پس‌زمینه تاریک هنگام لودینگ */
-#loadingScreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(10, 10, 10, 0.85);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-/* انیمیشن دایره‌های هوش مصنوعی */
-.loader {
-    display: flex;
-    gap: 10px;
-}
-
-.loader span {
-    width: 16px;
-    height: 16px;
-    background: #00eaff;
-    border-radius: 50%;
-    animation: bounce 0.6s infinite alternate;
-}
-
-.loader span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.loader span:nth-child(3) {
-    animation-delay: 0.4s;
-}
-
-@keyframes bounce {
-    from { transform: translateY(0); opacity: 0.4; }
-    to { transform: translateY(-15px); opacity: 1; }
-}
-</style>
-
-<!-- لودینگ AI -->
-<div id="loadingScreen">
-    <div class="loader">
-        <span></span><span></span><span></span>
-    </div>
-</div>
-
-<script>
-/* تابع نمایش و مخفی کردن لودینگ */
-function showLoading(callback) {
+// نمایش لودینگ قبل از محاسبه
+document.getElementById("calcBtn").addEventListener("click", ()=>{
     document.getElementById("loadingScreen").style.display = "flex";
 
-    setTimeout(() => {
+    setTimeout(()=>{
         document.getElementById("loadingScreen").style.display = "none";
+        calculate();
+    }, 2000); // ۲ ثانیه لودینگ
+});
 
-        if (callback) callback(); // اجرای نتیجه بعد از لودینگ
-    }, 2000); // مدت زمان لودینگ (۲ ثانیه)
-}
+// غیرفعال کردن همه حالت‌های زوم
+document.addEventListener('touchmove', function(event) { if(event.scale !== 1){ event.preventDefault(); } }, { passive: false });
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function(event){ let now = (new Date()).getTime(); if(now - lastTouchEnd <= 300){ event.preventDefault(); } lastTouchEnd = now; }, false);
+window.addEventListener('wheel', function(event){ if(event.ctrlKey){ event.preventDefault(); } }, { passive:false });
+document.addEventListener('keydown', function(e){ if(e.ctrlKey && (e.key==='+' || e.key==='-' || e.key==='=')){ e.preventDefault(); } });
 </script>
 
-
-
-
-    
 </body>
 </html>
