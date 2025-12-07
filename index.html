@@ -186,6 +186,7 @@ button:hover {
     .app-container { max-width: 550px; }
 }
 
+</style>
 
 <!-- قفل راست کلیک -->
 <script>
@@ -231,7 +232,6 @@ document.addEventListener('keydown', e => {
     </div>
 </div>
 
-<!-- لودینگ حرفه‌ای AI -->
 <div id="loadingScreen">
     <div class="ai-loader">
         <div class="center-glow"></div>
@@ -278,19 +278,15 @@ function calculate() {
     `;
 }
 
-// نمایش لودینگ حرفه‌ای AI قبل از محاسبه
+// نمایش لودینگ قبل از محاسبه
 document.getElementById("calcBtn").addEventListener("click", ()=>{
-    const loading = document.getElementById("loadingScreen");
-    loading.style.display = "flex";
-
-    // اختیاری: می‌توان صدای لودینگ یا جلوه‌های بیشتر اضافه کرد
+    document.getElementById("loadingScreen").style.display = "flex";
 
     setTimeout(()=>{
-        loading.style.display = "none"; // مخفی کردن لودینگ
-        calculate(); // اجرای تابع محاسبه BMI
-    }, 2500); // مدت زمان لودینگ: ۲.۵ ثانیه
+        document.getElementById("loadingScreen").style.display = "none";
+        calculate();
+    }, 2000); // ۲ ثانیه لودینگ
 });
-
 
 // غیرفعال کردن همه حالت‌های زوم
 document.addEventListener('touchmove', function(event) { if(event.scale !== 1){ event.preventDefault(); } }, { passive: false });
