@@ -307,6 +307,26 @@ document.addEventListener('keydown', function(e){ if(e.ctrlKey && (e.key==='+' |
 </script>
 
 
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const container = document.querySelector('.app-container');
+    if(!container) return;
+
+    // جلوگیری از "لرزش" هنگام اسکرول روی موبایل
+    container.addEventListener('touchstart', function(e) {
+        if(container.scrollTop === 0) container.scrollTop = 1;
+        if(container.scrollTop + container.offsetHeight === container.scrollHeight) {
+            container.scrollTop -= 1;
+        }
+    }, false);
+});
+</script>
+
+
+
+    
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const container = document.querySelector('.app-container');
