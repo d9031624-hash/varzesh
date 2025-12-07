@@ -250,6 +250,68 @@ function calculate() {
 
 
 
+<style>
+/* پس‌زمینه تاریک هنگام لودینگ */
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 10, 0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* انیمیشن دایره‌های هوش مصنوعی */
+.loader {
+    display: flex;
+    gap: 10px;
+}
+
+.loader span {
+    width: 16px;
+    height: 16px;
+    background: #00eaff;
+    border-radius: 50%;
+    animation: bounce 0.6s infinite alternate;
+}
+
+.loader span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loader span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+    from { transform: translateY(0); opacity: 0.4; }
+    to { transform: translateY(-15px); opacity: 1; }
+}
+</style>
+
+<!-- لودینگ AI -->
+<div id="loadingScreen">
+    <div class="loader">
+        <span></span><span></span><span></span>
+    </div>
+</div>
+
+<script>
+/* تابع نمایش و مخفی کردن لودینگ */
+function showLoading(callback) {
+    document.getElementById("loadingScreen").style.display = "flex";
+
+    setTimeout(() => {
+        document.getElementById("loadingScreen").style.display = "none";
+
+        if (callback) callback(); // اجرای نتیجه بعد از لودینگ
+    }, 2000); // مدت زمان لودینگ (۲ ثانیه)
+}
+</script>
 
 
 
