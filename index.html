@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+
+<!-- جلوگیری کامل از زوم -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<title>تحلیل‌گر پیشرفته بدن — نسخه حرفه‌ای</title>
+
+<!-- فونت BNazanin -->
+<style>
+@font-face {
+  font-family: 'BNazanin';
+  src: url('BNazanin.woff2') format('woff2');
+  font-weight: normal;
+}
+
+* {
+  font-family: 'BNazanin', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #f1f3f8;
+  padding: 0;
+  margin: 0;
+  direction: rtl;
+}
+
+/* ساختار اصلی کارت */
+.container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.card {
+  background: white;
+  padding: 26px;
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+  border: 1px solid #e0e6f0;
+}
+
+/* عنوان */
+h1 {
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+/* لیبل */
+label {
+  display: block;
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-top: 14px;
+  margin-bottom: 6px;
+}
+
+/* فیلدها */
+input, select {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.05rem;
+  border-radius: 12px;
+  border: 1px solid #cbd3e1;
+  background: #fafbff;
+  outline: none;
+}
+
+/* دکمه */
+button {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.2rem;
+  margin-top: 24px;
+  background: #2d67f3;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+button:active {
+  opacity: 0.8;
+}
+
+/* جعبه نتیجه */
+.result-box {
+  margin-top: 20px;
+  background: #f8faff;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #d9e3ff;
+  font-size: 1.1rem;
+}
+
+/* تگ وضعیت */
+.badge {
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-weight: bold;
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 1rem;
+}
+.good { background:#e5ffe9; color:#035c1f; }
+.warn { background:#fff4cc; color:#8a6d1b; }
+.bad  { background:#ffe5e5; color:#8a1616; }
+
+/* ریسپانسیو برای تبلت */
+@media (min-width: 600px) {
+  .container { max-width: 550px; }
+  h1 { font-size: 1.8rem; }
+  .card { padding: 32px; }
+}
+
+/* ریسپانسیو برای لپ‌تاپ */
+@media (min-width: 992px) {
+  .container { max-width: 720px; }
+  .card { padding: 35px; }
+  h1 { font-size: 2rem; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="card">
+
+    <h1>تحلیل‌گر دقیق وضعیت بدن</h1>
+
+    <label>سن (سال)</label>
+    <input id="age" type="number" min="10" max="120" placeholder="مثال: 28">
+
+    <label>قد (سانتی‌متر)</label>
+    <input id="height" type="number" min="50" max="250" placeholder="مثال: 175">
+
+    <label>وزن (کیلوگرم)</label>
+    <input id="weight" type="number" step="0.1" min="10" max="350" placeholder="مثال: 72.5">
+
+    <label>جنسیت</label>
+    <select id="gender">
+      <option value="male">مرد</option>
+      <option value="female">زن</option>
+    </select>
+
+    <button onclick="calculateAll()">محاسبه</button>
+
+    <div id="output" class="result-box" style="display:none"></div>
+
+  </div>
+</div>
+
+<script>
+function round(n, d=1) {
+  return Math.round(n * Math.pow(10,d)) / Math.pow(10,d);
+}
+
+function calculateAll() {
+  const age = Number(age.value);
+  const h = Number(height.value);
+  const w = Number(weight.value);
+  const g = gender.value;
+
+  const out = document.getElementById("output");
+
+  if(!age || !h || !w){
+    out.style.display="block";
+    out.innerHTML="<strong style='color:#c00'>لطفاً همه مقادیر را وارد کنید.</strong>";
+    return;
+  }
+
+  const hm = h/100;
+  const bmi = w / (hm*hm);
+  const bmiR = round(bmi,1);
+
+  let bmiStatus="", badgeClass="";
+  if(bmi < 18.5){ bmiStatus="لاغر"; badgeClass="warn"; }
+  else if(bmi < 25){ bmiStatus="طبیعی"; badgeClass="good"; }
+  else if(bmi < 30){ bmiStatus="اضافه‌وزن"; badgeClass="warn"; }
+  else { bmiStatus="چاق"; badgeClass="bad"; }
+
+  /* BodyFat */
+  let bodyFat = 1.20*bmi + 0.23*age - (g==="male" ? 16.2 : 5.4);
+  const bfR = round(bodyFat,1);
+
+  let bfStatus="";
+  if(g==="male"){
+    if(bodyFat<8) bfStatus="چربی کم";
+    else if(bodyFat<=20) bfStatus="نرمال";
+    else if(bodyFat<=25) bfStatus="اضافه چربی";
+    else bfStatus="چاقی";
+  } else {
+    if(bodyFat<20) bfStatus="چربی کم";
+    else if(bodyFat<=32) bfStatus="نرمال";
+    else if(bodyFat<=38) bfStatus="اضافه چربی";
+    else bfStatus="چاقی";
+  }
+
+  /* وزن هدف */
+  const idealBMI = g==="male" ? 22 : 21;
+  const idealWeight = idealBMI * hm * hm;
+  const diff = round(w - idealWeight,1);
+
+  let advice="";
+  if(diff>0) advice=`برای رسیدن به وزن ایده‌آل لازم است حدود ${diff} کیلوگرم کاهش وزن داشته باشید.`;
+  else if(diff<0) advice=`برای رسیدن به وزن ایده‌آل لازم است حدود ${Math.abs(diff)} کیلوگرم افزایش وزن داشته باشید.`;
+  else advice="شما دقیقاً در وزن ایده‌آل هستید!";
+
+  out.style.display="block";
+  out.innerHTML = `
+    <strong style="font-size:1.25rem;">BMI: ${bmiR}</strong>
+    <div class="badge ${badgeClass}">${bmiStatus}</div>
+
+    <hr>
+
+    <strong style="font-size:1.25rem;">Body Fat%: ${bfR}%</strong>
+    <div class="badge ${badgeClass}">${bfStatus}</div>
+
+    <hr>
+
+    <p><strong>وزن ایده‌آل:</strong> ${round(idealWeight,1)} کیلوگرم</p>
+    <p>${advice}</p>
+  `;
+}
+</script>
+
+</body>
+</html>
