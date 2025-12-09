@@ -132,6 +132,35 @@ html {
     </div>
 </div>
 
+
+
+<script>
+/* جلوگیری از زوم با دو انگشت در موبایل */
+document.addEventListener('touchmove', function (event) {
+    if (event.scale !== 1) {
+        event.preventDefault();
+    }
+}, { passive: false });
+
+/* جلوگیری از زوم با Ctrl + scroll در کامپیوتر */
+window.addEventListener('wheel', function (event) {
+    if (event.ctrlKey) {
+        event.preventDefault();
+    }
+}, { passive: false });
+
+/* جلوگیری از زوم با Ctrl + (+ - =) */
+document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=')) {
+        e.preventDefault();
+    }
+});
+</script>
+
+
+
+    
+    
 <script>
 function calculate() {
     let age = parseInt(document.getElementById("age").value);
