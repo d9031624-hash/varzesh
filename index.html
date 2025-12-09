@@ -179,6 +179,76 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
   </div>
 </div>
 
+
+
+
+
+
+<!-- جلوگیری از انتخاب و کپی متن (CSS + JS) -->
+<style>
+/* غیرقابل انتخاب کردن متن در کل صفحه */
+* {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important; /* iOS callout */
+}
+
+/* اگر می‌خواهی فرم‌ها/اینپوت‌ها هم غیرقابل انتخاب باشند (پیش‌فرض همینطور است).
+   در صورت تمایل می‌توان این خط را حذف کرد تا ورودی‌ها قابل انتخاب بمانند. */
+/* input, textarea, select { user-select: none !important; } */
+</style>
+
+<script>
+// جلوگیری از منوی راست‌کلیک
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); }, {passive:false});
+
+// جلوگیری از تلاش‌های کپی/برش/چسباندن
+['copy','cut','paste'].forEach(evt=>{
+  document.addEventListener(evt, function(e){ e.preventDefault(); }, {passive:false});
+});
+
+// جلوگیری از انتخاب متن (ماحصل: پاک کردن محدوده انتخاب)
+document.addEventListener('selectionchange', function(){
+  const s = document.getSelection();
+  if(s && s.rangeCount) {
+    // حذف فوری هر انتخاب
+    s.removeAllRanges();
+  }
+});
+
+// جلوگیری از کشیدن (drag) متن
+document.addEventListener('dragstart', function(e){ e.preventDefault(); }, {passive:false});
+
+// جلوگیری از کلیدهای میانبر کپی/چسباندن/برش/ذخیره/انتخاب همه
+document.addEventListener('keydown', function(e){
+  const key = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && (key === 'c' || key === 'x' || key === 'v' || key === 'a' || key === 's' || key === 'p')) {
+    e.preventDefault();
+  }
+  // همچنین جلوگیری از کلیدهای Shift+Arrow selection (اختیاری)
+  if (e.shiftKey && (key === 'arrowleft' || key === 'arrowright' || key === 'arrowup' || key === 'arrowdown')) {
+    e.preventDefault();
+  }
+}, {passive:false});
+
+// جلوگیری از شروع انتخاب با ماوس یا لمس
+document.addEventListener('mousedown', function(e){
+  // اگر بخواهی کلیک وسطی/راست هم غیرفعال باشند، اینجا می‌توان شرط گذاشت.
+  // e.preventDefault();
+}, {passive:false});
+
+document.addEventListener('touchstart', function(e){
+  // جلوگیری از انتخاب چند لمسی
+  if (e.touches && e.touches.length > 1) e.preventDefault();
+}, {passive:false});
+</script>
+
+
+
+
+  
 <script>
 /* ===========================
    تنظیمات: غیر فعال کردن زوم
