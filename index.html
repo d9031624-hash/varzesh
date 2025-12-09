@@ -1,381 +1,254 @@
+<!--
+پکیج: دو فایل لازم است (یک سرور PHP نیاز دارد):
+1) index.html  -> فایل فرانت‌اند (این فایل)
+2) proxy.php   -> فایل پی‌اچ‌پی که RSSها را می‌گیرد، یکپارچه می‌کند و JSON خروجی می‌دهد
+
+نکته‌ها:
+- فایل proxy.php از یک آرایه RSS استفاده می‌کند؛ آدرس‌های RSS را خودتان جایگزین کنید یا همان نمونه‌ها را نگه دارید.
+- proxy.php کش ساده فایل دارد تا از بارگذاری بیش از حد جلوگیری کند (TTL پیش‌فرض 15 ثانیه).
+- صفحه فرانت‌اند هر 20 ثانیه به صورت کامل رفرش می‌شود (location.reload()) تا «صفحه واقعاً رفرش» انجام شود.
+- اگر سرور شما CORS نداشت، فایل index.html و proxy.php را روی یک دامین/سرور قرار دهید.
+- برای نمایش تصاویر، proxy سعی می‌کند از <enclosure>، media:content یا تگ img داخل توضیحات عکس را استخراج کند.
+
+راهنما: هر دو فایل را در یک پوشه روی هاست با PHP (مثلاً /public_html/news/) قرار دهید.
+
+-->
+
+<!-- ===== index.html ===== -->
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TIVANA — خبرگزاری ورزشی</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>سایت خبری - فقط اخبار ایران (ریفرش ۲۰ ثانیه)</title>
   <style>
-    /* ساده و قابل خواندن — می‌توانید با Tailwind یا قالب وردپرس جایگزین کنید */
-    :root{--bg:#0f1724;--card:#0b1220;--accent:#ff6b6b;--text:#e6eef8}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Tahoma, Arial, Helvetica, sans-serif;background:linear-gradient(180deg,#071022 0%, #0b1220 100%);color:var(--text)}
-    header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.04)}
-    .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:44px;height:44px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;color:#071022}
-    nav{display:flex;gap:10px;align-items:center}
-    nav a{color:var(--text);text-decoration:none;padding:8px 10px;border-radius:8px}
-    nav a:hover{background:rgba(255,255,255,0.03)}
-    .actions{display:flex;gap:8px;align-items:center}
-    button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer}
-    .primary{background:var(--accent);color:#071022;border:none}
-    main{display:grid;grid-template-columns:320px 1fr;gap:18px;padding:18px}
-    .sidebar{background:rgba(255,255,255,0.02);padding:14px;border-radius:12px;height:calc(100vh - 120px);overflow:auto}
-    .card{background:var(--card);padding:12px;border-radius:10px;margin-bottom:12px}
-    .feeds-list button{display:block;width:100%;text-align:right;margin-top:8px}
-    .content{padding:0 6px}
-    .search{display:flex;gap:8px;margin-bottom:12px}
-    input[type=text]{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
-    .articles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
-    .article{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:12px;border-radius:10px;display:flex;flex-direction:column;gap:8px}
-    .article img{width:100%;height:160px;object-fit:cover;border-radius:8px}
-    .meta{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#cbd7e6}
-    .small{font-size:13px;color:#9fb0ca}
-    footer{padding:18px;text-align:center;color:#9fb0ca}
-    /* modal */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.7);display:none;align-items:center;justify-content:center}
-    .modal{background:#07102b;padding:18px;border-radius:12px;min-width:320px;color:var(--text)}
-    .hide{display:none}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.03);font-size:13px}
-    @media (max-width:900px){main{grid-template-columns:1fr;padding:12px}.sidebar{height:auto;order:2}.articles{grid-template-columns:repeat( auto-fill, minmax(220px,1fr))}}
+    body{font-family: Tahoma, Arial; background:#f5f7fb; color:#111; margin:0; padding:0}
+    header{background:#0b6; padding:14px 18px; color:#042; display:flex; align-items:center; justify-content:space-between}
+    header h1{margin:0; font-size:18px}
+    .container{max-width:980px; margin:18px auto; padding:0 12px}
+    .card{background:#fff; border-radius:10px; box-shadow:0 4px 12px rgba(10,10,10,0.06); padding:12px; margin-bottom:12px; display:flex; gap:12px}
+    .thumb{width:150px; min-width:120px; height:90px; overflow:hidden; border-radius:8px}
+    .thumb img{width:100%; height:100%; object-fit:cover}
+    .meta{flex:1}
+    .title{font-weight:700; margin:0 0 6px 0}
+    .desc{color:#444; font-size:14px; margin:0 0 8px 0}
+    .info{font-size:12px; color:#666}
+    footer{padding:10px 18px; text-align:center; color:#666}
+    .loader{display:inline-block; padding:6px 10px; background:#fff7; border-radius:6px}
+    .controls{display:flex; gap:10px; align-items:center}
+    .small{font-size:13px}
+    @media (max-width:600px){.card{flex-direction:column}.thumb{width:100%; height:200px}}
   </style>
 </head>
 <body>
   <header>
-    <div class="brand">
-      <div class="logo">T</div>
-      <div>
-        <div style="font-weight:700">TIVANA</div>
-        <div class="small">اخبار ورزشی ایران و جهان</div>
-      </div>
-    </div>
-    <nav>
-      <a href="#home">صفحه اصلی</a>
-      <a href="#iran">فوتبال ایران</a>
-      <a href="#world">فوتبال جهان</a>
-      <a href="#live">نتایج زنده</a>
-      <a href="#analysis">تحلیل</a>
-      <a href="#gallery">گالری</a>
-    </nav>
-    <div class="actions">
-      <span id="usernameBadge" class="pill hide"></span>
-      <button id="btnSaved">خبرهای ذخیره‌شده</button>
-      <button id="btnLogin">ورود / ثبت‌نام</button>
+    <h1>اخبار ایران — بروزرسانی خودکار هر ۲۰ ثانیه</h1>
+    <div class="controls small">
+      <div id="lastUpdate">بارگذاری...</div>
+      <div class="loader" id="countdown">۲۰</div>
     </div>
   </header>
 
-  <main>
-    <aside class="sidebar">
-      <div class="card">
-        <div style="font-weight:700">منابع RSS متصل</div>
-        <div class="feeds-list small" id="feedsList"></div>
-      </div>
-
-      <div class="card">
-        <div style="font-weight:700">جستجو در خبرها</div>
-        <div class="search">
-          <input id="searchInput" type="text" placeholder="کلیدواژه را وارد کنید..." />
-          <button id="searchBtn">جستجو</button>
-        </div>
-        <div class="small">می‌توانید دسته‌ها را انتخاب کنید و سپس جستجو کنید.</div>
-      </div>
-
-      <div class="card">
-        <div style="font-weight:700">دسته‌ها</div>
-        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-          <button class="pill" data-cat="all">همه</button>
-          <button class="pill" data-cat="football">فوتبال</button>
-          <button class="pill" data-cat="volleyball">والیبال</button>
-          <button class="pill" data-cat="basketball">بسکتبال</button>
-          <button class="pill" data-cat="analysis">تحلیل</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div style="font-weight:700">راهنما / نکات</div>
-        <div class="small" style="margin-top:8px;line-height:1.6">
-          • برای استفاده از ذخیره خبر و بخش‌های کاربران، ابتدا ثبت‌نام کنید. <br>
-          • بعضی خوراک‌ها ممکن است به‌خاطر سیاست CORS روی سرور خود قابل‌خواندن نباشند. این صفحه از یک پروکسی رایگان استفاده می‌کند.
-        </div>
-      </div>
-    </aside>
-
-    <section class="content">
-      <div class="card" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-weight:800;font-size:18px">آخرین خبرها</div>
-          <div class="small">اخبار ایران و جهان — به‌صورت خودکار از منابع RSS گرفته می‌شود</div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button id="refreshBtn">بروزرسانی</button>
-          <button id="autoToggle">خاموش: بروزرسانی خودکار</button>
-        </div>
-      </div>
-
-      <div id="articles" class="articles"></div>
-
-    </section>
-  </main>
-
-  <footer>
-    TIVANA — سایت نمونه خبری ورزشی | ساخته شده با HTML + JavaScript | (نسخه آزمایشی)
-  </footer>
-
-  <!-- modal login/register -->
-  <div id="modal" class="modal-backdrop">
-    <div class="modal">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-weight:700">ورود / ثبت‌نام</div>
-        <button id="closeModal">بستن</button>
-      </div>
-      <div id="authForms">
-        <div id="loginForm">
-          <input id="loginEmail" placeholder="ایمیل یا نام کاربری" style="width:100%;padding:8px;margin-bottom:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:var(--text)" />
-          <input id="loginPass" placeholder="رمز عبور" type="password" style="width:100%;padding:8px;margin-bottom:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:var(--text)" />
-          <div style="display:flex;gap:8px">
-            <button id="doLogin" class="primary">ورود</button>
-            <button id="showRegister">ثبت‌نام</button>
-          </div>
-        </div>
-        <div id="registerForm" class="hide">
-          <input id="regUser" placeholder="نام کاربری" style="width:100%;padding:8px;margin-bottom:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:var(--text)" />
-          <input id="regEmail" placeholder="ایمیل" style="width:100%;padding:8px;margin-bottom:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:var(--text)" />
-          <input id="regPass" placeholder="رمز عبور" type="password" style="width:100%;padding:8px;margin-bottom:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:var(--text)" />
-          <div style="display:flex;gap:8px">
-            <button id="doRegister" class="primary">ثبت‌نام</button>
-            <button id="showLogin">بازگشت</button>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="container" id="newsList">
+    <!-- اخبار اینجا درج می‌شود -->
   </div>
 
-  <script>
-    /*********** تنظیم منابع RSS پیش‌فرض ***********/
-    const FEEDS = [
-      {id:'varzesh3', title:'ورزش 3', url:'https://www.varzesh3.com/rss'},
-      {id:'isna_sport', title:'ایسنا - ورزشی', url:'https://www.isna.ir/rss/tp/7'},
-      {id:'tasnim', title:'تسنیم - ورزشی', url:'https://www.tasnimnews.com/fa/sports/rss'},
-      {id:'irna', title:'ایرنا - ورزشی', url:'https://www.irna.ir/rss/tp/20'},
-      {id:'khabaronline', title:'خبرآنلاین - ورزشی', url:'https://www.khabaronline.ir/rss/tp/5'},
-      {id:'espn', title:'ESPN', url:'https://www.espn.com/espn/rss/news'},
-      {id:'bbc_sport', title:'BBC Sport', url:'http://feeds.bbci.co.uk/sport/rss.xml'},
-      {id:'skysports', title:'Sky Sports', url:'https://www.skysports.com/rss/12040'}
-    ];
+  <footer>
+    سایت نمونه — منابع از RSS سایت‌های ایرانی دریافت می‌شود.
+  </footer>
 
-    /*********** المان‌های صفحه ***********/
-    const feedsList = document.getElementById('feedsList');
-    const articlesDiv = document.getElementById('articles');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const autoToggleBtn = document.getElementById('autoToggle');
-    const searchBtn = document.getElementById('searchBtn');
-    const searchInput = document.getElementById('searchInput');
-    const modal = document.getElementById('modal');
-    const btnLogin = document.getElementById('btnLogin');
-    const closeModal = document.getElementById('closeModal');
-    const btnSaved = document.getElementById('btnSaved');
-    const usernameBadge = document.getElementById('usernameBadge');
+<script>
+const API = './proxy.php'; // مسیر به proxy.php
+const REFRESH_SECONDS = 20; // هر ۲۰ ثانیه صفحه کاملاً رفرش شود
+let timer = REFRESH_SECONDS;
 
-    /*********** وضعیت برنامه ***********/
-    let selectedFeeds = new Set(FEEDS.map(f=>f.id));
-    let articles = []; // آرایه مقاله‌ها
-    let autoRefresh = false;
-    let autoInterval = null;
+function formatDate(d){
+  try{ const dt = new Date(d); return dt.toLocaleString('fa-IR'); }catch(e){return d}
+}
 
-    /*********** نمایش لیست منابع در سایدبار ***********/
-    function renderFeeds(){
-      feedsList.innerHTML = '';
-      FEEDS.forEach(f=>{
-        const el = document.createElement('div');
-        el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><strong>${f.title}</strong><div><button data-id="${f.id}" class="toggleFeed">${selectedFeeds.has(f.id)?'خاموش':'روشن'}</button></div></div>`;
-        feedsList.appendChild(el);
-      });
+async function loadNews(){
+  try{
+    const res = await fetch(API + '?format=json');
+    if(!res.ok) throw new Error('خطا هنگام گرفتن اخبار');
+    const data = await res.json();
+    const container = document.getElementById('newsList');
+    container.innerHTML = '';
+    document.getElementById('lastUpdate').textContent = 'بارگذاری: ' + formatDate(new Date());
+
+    if(!data.items || data.items.length===0){
+      container.innerHTML = '<p>خبری یافت نشد.</p>';
+      return;
     }
 
-    /*********** تابع کمکی برای fetch RSS با پروکسی (allorigins) ***********/
-    async function fetchRSS(url){
-      try{
-        // استفاده از allorigins برای جلوگیری از خطاهای CORS
-        const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-        const res = await fetch(proxy);
-        const data = await res.json();
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(data.contents, 'text/xml');
-        return xml;
-      }catch(e){
-        console.warn('خطا در دریافت:', url, e);
-        return null;
-      }
+    for(const item of data.items){
+      const card = document.createElement('article');
+      card.className = 'card';
+
+      const thumb = document.createElement('div'); thumb.className='thumb';
+      const img = document.createElement('img'); img.alt = item.title || '';
+      img.src = item.image || 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="100%" height="100%" fill="%23ddd"/></svg>';
+      thumb.appendChild(img);
+
+      const meta = document.createElement('div'); meta.className='meta';
+      const title = document.createElement('h2'); title.className='title';
+      const a = document.createElement('a'); a.href = item.link; a.target='_blank'; a.rel='noopener'; a.textContent = item.title || 'بدون عنوان';
+      title.appendChild(a);
+
+      const desc = document.createElement('p'); desc.className='desc'; desc.innerHTML = item.description || '';
+      const info = document.createElement('div'); info.className='info';
+      info.textContent = (item.source ? item.source + ' — ' : '') + (item.pubDate ? formatDate(item.pubDate) : '');
+
+      meta.appendChild(title); meta.appendChild(desc); meta.appendChild(info);
+
+      card.appendChild(thumb); card.appendChild(meta);
+      container.appendChild(card);
     }
+  }catch(err){
+    document.getElementById('newsList').innerHTML = '<p>خطا در دریافت اخبار: '+ err.message +'</p>';
+  }
+}
 
-    /*********** خواندن و تبدیل آیتم‌های RSS به آبجکت ***********/
-    function parseItemsFromXML(xml, source){
-      if(!xml) return [];
-      const items = Array.from(xml.querySelectorAll('item'));
-      return items.map(it=>{
-        const title = it.querySelector('title')?.textContent || 'بدون عنوان';
-        const link = it.querySelector('link')?.textContent || it.querySelector('guid')?.textContent || '#';
-        const desc = it.querySelector('description')?.textContent || '';
-        const pubDate = it.querySelector('pubDate')?.textContent || '';
-        const enclosure = it.querySelector('enclosure')?.getAttribute('url') || '';
-        // تلاش برای استخراج تصویر از توضیحات
-        let image = enclosure || '';
-        if(!image){
-          const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
-          if(imgMatch) image = imgMatch[1];
-        }
-        return {title,link,desc,image,pubDate,source};
-      });
-    }
+// شمارش معکوس برای نمایش در هدر
+function startCountdown(){
+  const el = document.getElementById('countdown');
+  setInterval(()=>{
+    timer--; if(timer<=0) timer = REFRESH_SECONDS;
+    el.textContent = timer;
+  },1000);
+}
 
-    /*********** بارگذاری همه فیدهای انتخاب‌شده ***********/
-    async function loadAll(){
-      articles = [];
-      const feedsToLoad = FEEDS.filter(f=>selectedFeeds.has(f.id));
-      const promises = feedsToLoad.map(async f=>{
-        const xml = await fetchRSS(f.url);
-        const items = parseItemsFromXML(xml, f.title);
-        return items;
-      });
-      const results = await Promise.all(promises);
-      results.forEach(arr=>articles.push(...arr));
-      // مرتب سازی بر اساس تاریخ اگر موجود
-      articles.sort((a,b)=> new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
-      renderArticles(articles);
-    }
+// بار اول داده‌ها را با AJAX بگیر تا کاربر دیده شود، سپس صفحهٔ کامل هر 20 ثانیه رفرش شود
+loadNews(); startCountdown();
+setTimeout(()=>{
+  // رفرش کامل صفحه — «صفحه واقعاً رفرش شود»
+  setInterval(()=>{
+    location.reload();
+  }, REFRESH_SECONDS * 1000);
+}, 1500);
 
-    /*********** رندر کردن مقاله‌ها در صفحه ***********/
-    function renderArticles(list){
-      articlesDiv.innerHTML = '';
-      if(!list.length){articlesDiv.innerHTML = '<div class="card">موردی برای نمایش وجود ندارد.</div>';return}
-      list.forEach(a=>{
-        const art = document.createElement('div');art.className='article';
-        art.innerHTML = `
-          ${a.image?`<img src="${a.image}" onerror="this.style.display='none'">`:''}
-          <div style="font-weight:700">${a.title}</div>
-          <div class="small">منبع: ${a.source} — ${a.pubDate? new Date(a.pubDate).toLocaleString('fa-IR'):''}</div>
-          <div class="meta">
-            <a href="${a.link}" target="_blank">مشاهده کامل</a>
-            <div>
-              <button class="saveBtn">ذخیره</button>
-            </div>
-          </div>
-        `;
-        // نصب handler برای ذخیره
-        art.querySelector('.saveBtn').addEventListener('click',()=>{
-          if(!getCurrentUser()){ alert('برای ذخیره خبر ابتدا وارد شوید.'); showModal(); return; }
-          saveArticle(a);
-        });
-        articlesDiv.appendChild(art);
-      });
-    }
-
-    /*********** ذخیره‌سازی اخبار برای هر کاربر در localStorage ***********/
-    function getCurrentUser(){
-      return JSON.parse(localStorage.getItem('tivana.currentUser') || 'null');
-    }
-    function setCurrentUser(u){
-      if(u) localStorage.setItem('tivana.currentUser', JSON.stringify(u)); else localStorage.removeItem('tivana.currentUser');
-      updateUserBadge();
-    }
-    function updateUserBadge(){
-      const u = getCurrentUser();
-      if(u){ usernameBadge.textContent = u.username; usernameBadge.classList.remove('hide'); btnLogin.textContent='خروج'; } else { usernameBadge.classList.add('hide'); btnLogin.textContent='ورود / ثبت‌نام'; }
-    }
-
-    function saveArticle(article){
-      const u = getCurrentUser(); if(!u) return;
-      const key = `tivana.saved.${u.username}`;
-      const prev = JSON.parse(localStorage.getItem(key) || '[]');
-      // جلوگیری از ذخیره تکراری
-      if(prev.find(p=>p.link===article.link)) { alert('این خبر قبلاً ذخیره شده است.'); return; }
-      prev.unshift(article);
-      localStorage.setItem(key, JSON.stringify(prev));
-      alert('خبر ذخیره شد.');
-    }
-    function showSaved(){
-      const u = getCurrentUser(); if(!u){ alert('ابتدا وارد شوید.'); showModal(); return; }
-      const key = `tivana.saved.${u.username}`;
-      const prev = JSON.parse(localStorage.getItem(key) || '[]');
-      renderArticles(prev);
-    }
-
-    /*********** سیستم ساده ثبت‌نام و ورود (localStorage) ***********/
-    function getUsers(){ return JSON.parse(localStorage.getItem('tivana.users')||'[]'); }
-    function saveUsers(u){ localStorage.setItem('tivana.users', JSON.stringify(u)); }
-
-    document.getElementById('showRegister').addEventListener('click',()=>{document.getElementById('loginForm').classList.add('hide');document.getElementById('registerForm').classList.remove('hide')});
-    document.getElementById('showLogin').addEventListener('click',()=>{document.getElementById('loginForm').classList.remove('hide');document.getElementById('registerForm').classList.add('hide')});
-
-    document.getElementById('doRegister').addEventListener('click',()=>{
-      const username = document.getElementById('regUser').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const pass = document.getElementById('regPass').value;
-      if(!username || !email || !pass){ alert('لطفا همه فیلدها را پر کنید.'); return; }
-      const users = getUsers();
-      if(users.find(u=>u.username===username || u.email===email)){ alert('نام کاربری یا ایمیل تکراری است.'); return; }
-      users.push({username,email,pass}); saveUsers(users);
-      setCurrentUser({username,email}); alert('ثبت‌نام با موفقیت انجام شد.'); modal.style.display='none'; setTimeout(()=>{setCurrentUser({username,email})},100);
-    });
-
-    document.getElementById('doLogin').addEventListener('click',()=>{
-      const q = document.getElementById('loginEmail').value.trim();
-      const pass = document.getElementById('loginPass').value;
-      const users = getUsers();
-      const found = users.find(u=>(u.username===q || u.email===q) && u.pass===pass);
-      if(!found){ alert('کاربری با این مشخصات یافت نشد.'); return; }
-      setCurrentUser({username:found.username,email:found.email}); alert('ورود موفق.'); modal.style.display='none';
-    });
-
-    btnLogin.addEventListener('click',()=>{
-      const u = getCurrentUser(); if(u){ if(confirm('آیا می‌خواهید از حساب خارج شوید؟')){ setCurrentUser(null); alert('خروج انجام شد.'); loadAll(); } return; }
-      showModal();
-    });
-    closeModal.addEventListener('click',()=>{modal.style.display='none'});
-    function showModal(){ modal.style.display='flex'; }
-
-    /*********** کنترل انتخاب منابع و دکمه‌ها ***********/
-    document.addEventListener('click',(e)=>{
-      if(e.target.classList.contains('toggleFeed')){
-        const id = e.target.getAttribute('data-id');
-        if(selectedFeeds.has(id)) selectedFeeds.delete(id); else selectedFeeds.add(id);
-        e.target.textContent = selectedFeeds.has(id)?'خاموش':'روشن';
-        loadAll();
-      }
-      if(e.target.id==='refreshBtn' || e.target.closest && e.target.closest('#refreshBtn')){ /* handled below */ }
-      if(e.target.classList.contains('pill')){
-        const cat = e.target.getAttribute('data-cat');
-        if(cat==='all') renderArticles(articles); else {
-          // فیلتر ساده بر اساس کلمات کلیدی دسته
-          const map = {football:['football','فوتبال'], volleyball:['والیبال'], basketball:['بسکتبال'], analysis:['تحلیل','آنالیز']};
-          const keys = map[cat] || [cat];
-          const filtered = articles.filter(a=> keys.some(k=> (a.title + a.desc + a.source).toLowerCase().includes(k)) );
-          renderArticles(filtered);
-        }
-      }
-    });
-
-    refreshBtn.addEventListener('click',()=>{ loadAll(); });
-
-    autoToggleBtn.addEventListener('click',()=>{
-      autoRefresh = !autoRefresh; if(autoRefresh){ autoToggleBtn.textContent='روشن: بروزرسانی خودکار'; autoInterval = setInterval(loadAll, 1000*60*3); } else { autoToggleBtn.textContent='خاموش: بروزرسانی خودکار'; clearInterval(autoInterval); }
-    });
-
-    searchBtn.addEventListener('click',()=>{
-      const q = searchInput.value.trim().toLowerCase(); if(!q) return renderArticles(articles);
-      const filtered = articles.filter(a=> (a.title + a.desc + a.source).toLowerCase().includes(q));
-      renderArticles(filtered);
-    });
-
-    btnSaved.addEventListener('click',()=>{ showSaved(); });
-
-    /*********** init ***********/
-    renderFeeds();
-    updateUserBadge();
-    loadAll();
-
-    // نکته: برای تولید سایت واقعی و استوارتر، بهتر است یک سرور کوچک (Node.js یا PHP) بسازید
-    // که از منابع RSS کش کند و API ارائه دهد. این نسخه فقط با localStorage و پروکسی رایگان کار می‌کند.
-
-  </script>
+</script>
 </body>
 </html>
+
+
+<!-- ===== proxy.php ===== -->
+<?php
+/*
+فایل: proxy.php
+نحوه استفاده: همین فایل را با نام proxy.php در کنار index.html آپلود کنید.
+این پروکسی فهرستی از RSSها را می‌گیرد، آنها را پارس کرده و JSON خروجی می‌دهد.
+دقت: هاست یا سرور باید PHP فعال داشته باشد (نسخه 7+ توصیه می‌شود).
+*/
+
+if(php_sapi_name() == 'cli-server'){
+    // برای سرور توسعه داخلی php
+}
+
+// تنظیمات
+$cache_file = __DIR__ . '/news_cache.json';
+$cache_ttl = 15; // ثانیه
+$rss_list = array(
+    // نمونه آدرس‌های RSS (در صورت نیاز آدرس‌ها را جایگزین کنید)
+    'https://www.irna.ir/rss',
+    'https://www.tasnimnews.com/fa/rss/allnews',
+    'https://www.mehrnews.com/rss',
+    'https://www.isna.ir/rss',
+    // اضافه کنید: RSS سایت‌هایی که می‌خواهید
+);
+
+if(isset($_GET['format']) && $_GET['format'] === 'json'){
+    header('Content-Type: application/json; charset=utf-8');
+
+    // کش ساده
+    if(file_exists($cache_file)){
+        $meta = json_decode(file_get_contents($cache_file), true);
+        if($meta && isset($meta['fetched_at']) && (time() - $meta['fetched_at'] < $cache_ttl)){
+            echo json_encode($meta['data']); exit;
+        }
+    }
+
+    $items = array();
+    foreach($rss_list as $feed_url){
+        $content = @file_get_contents($feed_url);
+        if(!$content) continue;
+        libxml_use_internal_errors(true);
+        $xml = @simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
+        if(!$xml) continue;
+
+        $ns_media = $xml->getNamespaces(true);
+        $channel = null;
+        if(isset($xml->channel)) $channel = $xml->channel;
+        else $channel = $xml;
+
+        $sourceName = '';
+        if(isset($channel->title)) $sourceName = (string)$channel->title;
+
+        $entries = array();
+        if(isset($channel->item)) $entries = $channel->item;
+        elseif(isset($xml->entry)) $entries = $xml->entry; // atom
+
+        foreach($entries as $e){
+            $title = (string)$e->title;
+            $link = '';
+            if(isset($e->link) && (string)$e->link){
+                $link = (string)$e->link;
+            }else{
+                // atom link
+                if(isset($e->link['href'])) $link = (string)$e->link['href'];
+            }
+            $pubDate = '';
+            if(isset($e->pubDate)) $pubDate = (string)$e->pubDate;
+            if(isset($e->published) && !$pubDate) $pubDate = (string)$e->published;
+            $description = '';
+            if(isset($e->description)) $description = (string)$e->description;
+            if(isset($e->summary) && !$description) $description = (string)$e->summary;
+
+            // تصویر: اولویت: enclosure -> media:content -> داخل description
+            $image = '';
+            if(isset($e->enclosure) && isset($e->enclosure['url'])) $image = (string)$e->enclosure['url'];
+            else {
+                // media:content
+                foreach($ns_media as $k=>$v){
+                    $m = $e->children($v);
+                    if(isset($m->content) && isset($m->content->attributes()->url)){
+                        $image = (string)$m->content->attributes()->url; break;
+                    }
+                }
+            }
+            if(!$image){
+                // جستجوی تصویر در تگ img داخل description
+                if(preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $description, $m)){
+                    $image = $m[1];
+                }
+            }
+
+            $items[] = array(
+                'title'=>$title,
+                'link'=>$link,
+                'pubDate'=>$pubDate,
+                'description'=>$description,
+                'image'=>$image,
+                'source'=>$sourceName,
+            );
+        }
+    }
+
+    // مرتب‌سازی بر اساس تاریخ انتشار (جدید به قدیم)
+    usort($items, function($a,$b){
+        $ta = strtotime($a['pubDate']); $tb = strtotime($b['pubDate']);
+        return $tb <=> $ta;
+    });
+
+    $out = array('items'=>$items);
+    // ذخیره کش
+    file_put_contents($cache_file, json_encode(array('fetched_at'=>time(),'data'=>$out)));
+
+    echo json_encode($out, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// اگر بدون پارامتر فرمت فراخوانی شد، یک پیام ساده نشان بده
+?><!doctype html>
+<html lang="fa"><head><meta charset="utf-8"><title>Proxy</title></head><body>
+<p>این فایل پروکسی RSS است. برای دریافت JSON از ?format=json استفاده کنید.</p>
+</body></html>
