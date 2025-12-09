@@ -248,6 +248,86 @@ document.addEventListener('touchstart', function(e){
 
 
 
+
+
+<script>
+// تابع نمایش نوتیفیکیشن
+function showNotification(message) {
+    // بررسی پشتیبانی مرورگر
+    if (!("Notification" in window)) {
+        alert(message); // اگر مرورگر نوتیفیکیشن نداشت، از alert استفاده شود
+        return;
+    }
+
+    // درخواست اجازه کاربر (یک بار کافی است)
+    if (Notification.permission === "granted") {
+        new Notification("وضعیت بدن", { body: message, icon: "https://i.ibb.co/8dy5Z1Y/body.png" });
+    } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(function(permission) {
+            if (permission === "granted") {
+                new Notification("وضعیت بدن", { body: message, icon: "https://i.ibb.co/8dy5Z1Y/body.png" });
+            } else {
+                alert(message); // اگر اجازه نداد، fallback
+            }
+        });
+    } else {
+        alert(message); // اگر قبلاً رد کرده، fallback
+    }
+}
+
+// مثال: بعد از محاسبه BMI
+function calculate() {
+    let age = parseInt(document.getElementById("age").value);
+    let height = parseInt(document.getElementById("height").value)/100;
+    let weight = parseFloat(document.getElementById("weight").value);
+    let gender = document.getElementById("gender").value;
+
+    if(!age || !height || !weight) {
+        document.getElementById("result").innerText = "لطفاً همه مقادیر را وارد کنید.";
+        return;
+    }
+
+    let bmi = weight / (height*height);
+    let bodyFat = gender === "male" ? 1.20*bmi + 0.23*age - 16.2 : 1.20*bmi + 0.23*age - 5.4;
+    bodyFat = Math.max(0, bodyFat);
+
+    let idealBMI = gender === "male" ? 22 : 21;
+    let idealWeight = idealBMI * (height*height);
+    let diff = weight - idealWeight;
+
+    let status = bmi < 18.5 ? "کم‌وزن" :
+                 bmi < 25 ? "نرمال" :
+                 bmi < 30 ? "اضافه وزن" :
+                             "چاق";
+
+    const resultMessage = `
+BMI: ${bmi.toFixed(1)}
+درصد چربی بدن: ${bodyFat.toFixed(1)}%
+وضعیت: ${status}
+وزن ایده‌آل: ${idealWeight.toFixed(1)} کیلوگرم
+اختلاف وزن: ${diff.toFixed(1)} کیلوگرم
+    `;
+
+    document.getElementById("result").innerText = resultMessage;
+
+    // نمایش نوتیفیکیشن بعد از ۱ ثانیه
+    setTimeout(() => {
+        showNotification(`وضعیت بدن شما: ${status}, BMI: ${bmi.toFixed(1)}`);
+    }, 1000);
+}
+
+// مثال اتصال به دکمه
+document.getElementById("calcBtn").addEventListener("click", () => {
+    calculate();
+});
+</script>
+
+
+
+
+
+  
+
   
 <script>
 /* ===========================
