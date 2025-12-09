@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="fa">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TIVANA — سایت ورزشی</title>
+  <style>
+    /* Reset + base */
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#1fb6ff;--muted:#9aa8b2;--glass: rgba(255,255,255,0.03)}
+    *{box-sizing:border-box;font-family: 'Vazirmatn', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071126 0%, #071a2a 100%);color:#e6f0f6;direction:rtl}
+    a{color:inherit;text-decoration:none}
+
+    /* Top navigation */
+    .topbar{position:sticky;top:0;z-index:50;backdrop-filter: blur(6px);background:linear-gradient(180deg, rgba(10,14,20,0.6), rgba(10,14,20,0.3));display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.03)}
+    .brand{font-weight:700;font-size:20px;display:flex;align-items:center;gap:10px}
+    .brand .logo{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:900}
+    .nav{display:flex;gap:6px;overflow:auto;padding:6px;flex:1}
+    .nav button{background:transparent;border:0;padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer;transition:all .25s;white-space:nowrap}
+    .nav button:hover{transform:translateY(-4px);color:#fff;background:rgba(255,255,255,0.02);box-shadow:0 6px 18px rgba(0,0,0,0.6)}
+    .nav button.active{color:#071126;background:linear-gradient(90deg,var(--accent),#8b5cf6);box-shadow:0 8px 30px rgba(31,182,255,0.08)}
+    .auth{display:flex;gap:8px}
+    .btn{padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:600}
+    .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04)}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#8b5cf6);color:#071126}
+
+    /* Layout */
+    .container{max-width:1100px;margin:26px auto;padding:10px}
+    .hero{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+    .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 8px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.02)}
+
+    /* anim smooth scroll */
+    html{scroll-behavior:smooth}
+
+    /* calculators grid */
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+
+    /* forms */
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e6f0f6}
+    .row{display:flex;gap:8px}
+    .small{flex:1}
+
+    /* profile */
+    .profile-grid{display:grid;grid-template-columns:220px 1fr;gap:12px}
+
+    /* footer */
+    footer{margin-top:26px;text-align:center;color:var(--muted);padding:24px}
+
+    /* responsive */
+    @media (max-width:900px){.hero{grid-template-columns:1fr}.brand{font-size:18px}.nav{display:none}}
+
+    /* floating action animation on scroll */
+    .floating{position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--accent),#8b5cf6);padding:12px;border-radius:999px;box-shadow:0 12px 40px rgba(0,0,0,0.5);cursor:pointer}
+
+    /* subtle section entrance */
+    section{opacity:0;transform:translateY(10px);transition:all .5s cubic-bezier(.2,.9,.2,1);will-change:opacity,transform}
+    section.visible{opacity:1;transform:none}
+
+    /* small helpers */
+    .muted{color:var(--muted);font-size:13px}
+    .mt{margin-top:12px}
+    .mb{margin-bottom:12px}
+  </style>
+</head>
+<body>
+  <!-- topbar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">T</div>
+      <div>
+        <div>TIVANA</div>
+        <div style="font-size:11px;color:var(--muted)">پرتال ورزشی و تناسب اندام</div>
+      </div>
+    </div>
+
+    <nav class="nav" aria-label="main navigation">
+      <!-- Each button corresponds to the user's requested features -->
+      <button data-route="news" class="nav-btn">اخبار</button>
+      <button data-route="calculators" class="nav-btn">محاسبه‌گرهای بدن</button>
+      <button data-route="workout" class="nav-btn">برنامه تمرینی هوشمند</button>
+      <button data-route="meal" class="nav-btn">برنامه رژیمی هوشمند</button>
+      <button data-route="moves" class="nav-btn">حرکات ورزشی</button>
+      <button data-route="profile" class="nav-btn">پروفایل</button>
+      <button data-route="progress" class="nav-btn">پروفایل ورزشی</button>
+      <button data-route="blog" class="nav-btn">وبلاگ</button>
+      <button data-route="shop" class="nav-btn">فروشگاه</button>
+      <button data-route="motivate" class="nav-btn">انگیزشی</button>
+      <button data-route="challenges" class="nav-btn">مسابقات آنلاین</button>
+      <button data-route="bodytype" class="nav-btn">تست فرم بدنی</button>
+      <button data-route="oneRM" class="nav-btn">ماشین‌حساب 1RM</button>
+    </nav>
+
+    <div class="auth">
+      <button id="btn-login" class="btn ghost">ورود</button>
+      <button id="btn-register" class="btn primary">ثبت‌نام</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <!-- Sections shown/hidden by JS -->
+
+    <section id="news" class="card mt mb">
+      <h2>اخبار ورزشی</h2>
+      <p class="muted">چند تیتر آخر و خلاصه — این بخش می‌تواند با یک RSS یا API خبر (Wired, BBC Sport, Varzesh3) متصل شود.</p>
+      <div class="mt">
+        <article class="card mt">
+          <h3>تیتر نمونه ۱</h3>
+          <p class="muted">خلاصه‌ای از خبر. (محتوا نمونه است)</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="calculators" class="card mt mb">
+      <h2>محاسبه‌گرهای تخصصی بدن</h2>
+      <p class="muted">BMI, BMR, TDEE, درصد چربی، کالری غذاها، آب مورد نیاز و ضربان هدف تمرین.</p>
+
+      <div class="grid mt">
+        <!-- BMI -->
+        <div class="card">
+          <h4>BMI — شاخص توده بدنی</h4>
+          <label>قد (cm)</label>
+          <input id="bmi-height" type="number" placeholder="مثال: 175" />
+          <label>وزن (kg)</label>
+          <input id="bmi-weight" type="number" placeholder="مثال: 70" />
+          <div class="mt row">
+            <button id="calc-bmi" class="btn primary small">محاسبه</button>
+            <div id="bmi-result" class="small muted" style="padding:8px">نتیجه اینجا نمایش می‌یابد</div>
+          </div>
+        </div>
+
+        <!-- BMR -->
+        <div class="card">
+          <h4>BMR — میزان کالری پایه (Mifflin-St Jeor)</h4>
+          <label>جنسیت</label>
+          <select id="bmr-gender"><option value="male">مرد</option><option value="female">زن</option></select>
+          <label>قد (cm)</label>
+          <input id="bmr-height" type="number" />
+          <label>وزن (kg)</label>
+          <input id="bmr-weight" type="number" />
+          <label>سن</label>
+          <input id="bmr-age" type="number" />
+          <div class="mt row">
+            <button id="calc-bmr" class="btn primary small">محاسبه</button>
+            <div id="bmr-result" class="small muted" style="padding:8px">نتیجه اینجا</div>
+          </div>
+        </div>
+
+        <!-- TDEE -->
+        <div class="card">
+          <h4>TDEE — کالری روزانه لازم</h4>
+          <label>سطح فعالیت</label>
+          <select id="tdee-activity">
+            <option value="1.2">خیلی کم (کم‌تحرک)</option>
+            <option value="1.375">کم</option>
+            <option value="1.55" selected>متوسط</option>
+            <option value="1.725">فعال</option>
+            <option value="1.9">بسیار فعال</option>
+          </select>
+          <div class="mt row">
+            <button id="calc-tdee" class="btn primary small">محاسبه</button>
+            <div id="tdee-result" class="small muted" style="padding:8px">نتیجه اینجا</div>
+          </div>
+          <div class="muted mt">TDEE = BMR × ضریب فعالیت</div>
+        </div>
+
+        <!-- Body Fat (US Navy) -->
+        <div class="card">
+          <h4>درصد چربی بدنی (تقریبی) — US Navy</h4>
+          <label>قد (cm)</label>
+          <input id="bf-height" type="number" />
+          <label>دور کمر (cm)</label>
+          <input id="bf-waist" type="number" />
+          <label>دور گردن (cm)</label>
+          <input id="bf-neck" type="number" />
+          <label>جنسیت</label>
+          <select id="bf-gender"><option value="male">مرد</option><option value="female">زن</option></select>
+          <div class="mt row">
+            <button id="calc-bf" class="btn primary small">محاسبه</button>
+            <div id="bf-result" class="small muted" style="padding:8px">نتیجه اینجا</div>
+          </div>
+        </div>
+
+        <!-- Calories from food (simple) -->
+        <div class="card">
+          <h4>محاسبه کالری غذا (سرجمع)</h4>
+          <label>کالری هر وعده</label>
+          <input id="food-cal" type="number" placeholder="مثال: 350" />
+          <label>تعداد وعده</label>
+          <input id="food-qty" type="number" value="1" />
+          <div class="mt row">
+            <button id="calc-food" class="btn primary small">محاسبه</button>
+            <div id="food-result" class="small muted" style="padding:8px">نتیجه</div>
+          </div>
+        </div>
+
+        <!-- Water needs -->
+        <div class="card">
+          <h4>آب مورد نیاز روزانه</h4>
+          <label>وزن (kg)</label>
+          <input id="water-weight" type="number" />
+          <div class="mt row">
+            <button id="calc-water" class="btn primary small">محاسبه</button>
+            <div id="water-result" class="small muted" style="padding:8px">نتیجه</div>
+          </div>
+          <div class="muted mt">قانون ساده: 30-35 میلی‌لیتر × وزن (کیلوگرم)</div>
+        </div>
+
+        <!-- Target heart rate (Karvonen) -->
+        <div class="card">
+          <h4>ضربان هدف تمرین (Karvonen)</h4>
+          <label>سن</label>
+          <input id="hr-age" type="number" />
+          <label>ضربان استراحت (bpm)</label>
+          <input id="hr-rest" type="number" value="70" />
+          <label>شدت (%)</label>
+          <input id="hr-intensity" type="number" value="70" />
+          <div class="mt row">
+            <button id="calc-hr" class="btn primary small">محاسبه</button>
+            <div id="hr-result" class="small muted" style="padding:8px">نتیجه</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="workout" class="card mt mb">
+      <h2>برنامه تمرینی هوشمند</h2>
+      <p class="muted">فرم را تکمیل کنید تا برنامهٔ پیشنهادی ۳ یا ۵ روزه نمایش داده شود.</p>
+      <div class="mt card">
+        <label>سن</label>
+        <input id="w-age" type="number" />
+        <label>قد (cm)</label>
+        <input id="w-height" type="number" />
+        <label>وزن (kg)</label>
+        <input id="w-weight" type="number" />
+        <label>هدف</label>
+        <select id="w-goal"><option value="cut">چربی‌سوزی</option><option value="bulk">عضله‌سازی</option></select>
+        <label>سطح تمرین</label>
+        <select id="w-level"><option value="beginner">مبتدی</option><option value="intermediate">متوسط</option><option value="advanced">پیشرفته</option></select>
+        <div class="mt row"><button id="make-workout" class="btn primary">دریافت برنامه</button><div id="workout-result" class="muted small" style="padding:8px">نتیجه</div></div>
+      </div>
+    </section>
+
+    <section id="meal" class="card mt mb">
+      <h2>برنامه رژیمی هوشمند</h2>
+      <p class="muted">محاسبهٔ کالری پایه و پیشنهاد ترکیب پروتئین/کربوهیدرات/چربی. امکان ساخت لیست غذا و سفارش هفتگی (نمونه).</p>
+      <div class="card mt">
+        <label>کالری هدف روزانه</label>
+        <input id="meal-cal-target" type="number" />
+        <div class="mt row"><button id="meal-gen" class="btn primary">ایجاد نمونه برنامه هفتگی</button><div id="meal-result" class="muted small" style="padding:8px"></div></div>
+      </div>
+    </section>
+
+    <section id="moves" class="card mt mb">
+      <h2>کتابخانه حرکات</h2>
+      <p class="muted">گالری حرکت به همراه عکس، توضیح و ویدیو کوتاه (۱۵ ثانیه). مثال‌های نمونه قرار داده شده است.</p>
+      <div class="grid mt">
+        <div class="card"><h4>پرس سینه</h4><div class="muted">عکس، توضیح، ویدیو (placeholder)</div></div>
+        <div class="card"><h4>ددلیفت</h4><div class="muted">عکس، توضیح، ویدیو (placeholder)</div></div>
+        <div class="card"><h4>اسکوات</h4><div class="muted">عکس، توضیح، ویدیو (placeholder)</div></div>
+      </div>
+    </section>
+
+    <section id="profile" class="card mt mb">
+      <h2>پروفایل کاربری</h2>
+      <div id="profile-area" class="profile-grid mt">
+        <div class="card" style="text-align:center">
+          <div id="avatar" style="width:120px;height:120px;border-radius:12px;margin:10px auto;background:linear-gradient(90deg,var(--accent),#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:900">U</div>
+          <div id="profile-name" style="font-weight:700">(نام کاربر)</div>
+          <div id="profile-email" class="muted">(ایمیل)</div>
+          <div class="mt"><button id="profile-logout" class="btn ghost">خروج</button></div>
+          <div class="mt"><button id="profile-delete" class="btn" style="background:#ff5c5c">حذف واقعی و دائمی حساب</button></div>
+        </div>
+        <div class="card">
+          <h4>جزئیات حساب</h4>
+          <div id="profile-details" class="muted">اگر وارد نشده‌اید، ابتدا ثبت‌نام یا ورود کنید.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="progress" class="card mt mb">
+      <h2>پروفایل ورزشی (ثبت وزن/عکس/نمودار)</h2>
+      <p class="muted">ثبت وزن روزانه، آپلود عکس قبل/بعد، تیک تمرین روزانه و نمودار پیشرفت (نمونه). داده‌ها در مرورگر ذخیره می‌شوند.</p>
+      <div class="card mt">
+        <label>وزن امروز (kg)</label>
+        <input id="log-weight" type="number" />
+        <label>توضیحات</label>
+        <input id="log-note" type="text" />
+        <div class="mt row"><button id="log-weight-btn" class="btn primary">ثبت وزن</button><div id="log-result" class="muted small"></div></div>
+      </div>
+    </section>
+
+    <section id="blog" class="card mt mb">
+      <h2>وبلاگ آموزش ورزشی و تغذیه</h2>
+      <p class="muted">مقاله‌ها، نکات، و دسته‌بندی‌شده برای امتحانات و یادگیری کاربران.</p>
+    </section>
+
+    <section id="shop" class="card mt mb">
+      <h2>فروشگاه</h2>
+      <p class="muted">قابلیت فروش محصولات: پوشاک، مکمل، دمبل، برنامه‌ها — نمونهٔ نمایش کالاها.</p>
+    </section>
+
+    <section id="motivate" class="card mt mb">
+      <h2>بخش انگیزشی</h2>
+      <p class="muted">جملات انگیزشی روزانه، گالری قبل/بعد و داستان موفقیت کاربران.</p>
+    </section>
+
+    <section id="challenges" class="card mt mb">
+      <h2>مسابقات آنلاین</h2>
+      <p class="muted">چالش‌ها: ۳۰ روزه، ۱۰ هزار قدم، بدون قند — ثبت امتیاز و رتبه‌بندی به صورت محلی.</p>
+    </section>
+
+    <section id="bodytype" class="card mt mb">
+      <h2>تست فرم بدنی</h2>
+      <p class="muted">چند سؤال ساده برای تعیین اکتومورف/اندومورف/مزومورف.</p>
+      <div class="card mt">
+        <label>قد</label><input id="bt-height" type="number" />
+        <label>وزن</label><input id="bt-weight" type="number" />
+        <label>سابقه ورزش</label>
+        <select id="bt-activity"><option value="low">کم</option><option value="mid">متوسط</option><option value="high">زیاد</option></select>
+        <div class="mt row"><button id="bt-calc" class="btn primary">تعیین فرم</button><div id="bt-result" class="muted small"></div></div>
+      </div>
+    </section>
+
+    <section id="oneRM" class="card mt mb">
+      <h2>ماشین‌حساب 1RM</h2>
+      <p class="muted">محاسبه حداکثر یک‌تکرار با فرمول Epley.</p>
+      <label>وزنه (kg)</label><input id="rm-weight" type="number" />
+      <label>تکرار</label><input id="rm-reps" type="number" />
+      <div class="mt row"><button id="calc-rm" class="btn primary">محاسبه 1RM</button><div id="rm-result" class="muted small"></div></div>
+    </section>
+
+    <footer class="card mt">© 2025 TIVANA — طراحی نمونه. برای عملکرد کامل نیاز به بک‌اند و API برای ذخیره‌سازی امن و همگام‌سازی کاربرها است.</footer>
+  </main>
+
+  <div id="floating" class="floating" title="بازگشت به بالا">▲</div>
+
+  <!-- Login / Register modal (simple) -->
+  <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.6);z-index:200;align-items:center;justify-content:center">
+    <div style="width:420px;max-width:94%;padding:16px;border-radius:12px;background:linear-gradient(180deg,#0b1220,#071126);border:1px solid rgba(255,255,255,0.03)">
+      <h3 id="modal-title">ورود</h3>
+      <div id="modal-body">
+        <label>نام کامل</label>
+        <input id="reg-name" />
+        <label>ایمیل</label>
+        <input id="reg-email" />
+        <label>گذرواژه</label>
+        <input id="reg-pass" type="password" />
+        <div class="mt row"><button id="modal-skip" class="btn ghost">لغو</button><button id="modal-action" class="btn primary">ثبت</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple client-side single-file prototype (no backend).
+    // Data stored in localStorage under key 'tivana_users' and 'tivana_session'
+
+    // helpers
+    const $ = s=>document.querySelector(s);
+    const $$ = s=>document.querySelectorAll(s);
+
+    // Route / nav
+    function showSection(id){
+      document.querySelectorAll('main section').forEach(sec=>sec.classList.remove('visible'));
+      const el = document.getElementById(id);
+      if(el){el.classList.add('visible');window.location.hash = id}
+      // active nav
+      $$('.nav-btn').forEach(b=>{b.classList.toggle('active', b.dataset.route===id)});
+    }
+    $$('.nav-btn').forEach(b=>b.addEventListener('click', ()=>{
+      const route = b.dataset.route;
+      // require login for most features except news
+      if(!isLoggedIn() && route!=='news'){openModal('login', ()=>{showSection(route)}) ; return}
+      showSection(route);
+    }));
+
+    // Floating back-to-top
+    document.getElementById('floating').addEventListener('click', ()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+    // Modal logic
+    const modal = $('#modal');
+    const modalTitle = $('#modal-title');
+    const modalAction = $('#modal-action');
+    const modalSkip = $('#modal-skip');
+    let modalCallback = null;
+    function openModal(type, cb){
+      modalCallback = cb||null; modal.style.display='flex';
+      if(type==='login'){
+        modalTitle.textContent='ورود';
+        $('#reg-name').style.display='none';
+      } else {
+        modalTitle.textContent='ثبت‌نام';
+        $('#reg-name').style.display='block';
+      }
+      modalAction.textContent = (type==='login')? 'ورود' : 'ثبت‌نام';
+      modal.dataset.mode = type;
+    }
+    modalSkip.addEventListener('click', ()=>modal.style.display='none');
+    $('#btn-login').addEventListener('click', ()=>openModal('login'));
+    $('#btn-register').addEventListener('click', ()=>openModal('register'));
+
+    modalAction.addEventListener('click', ()=>{
+      const mode = modal.dataset.mode;
+      const name = $('#reg-name').value.trim();
+      const email = $('#reg-email').value.trim();
+      const pass = $('#reg-pass').value;
+      if(mode==='register'){
+        if(!email||!pass||!name){alert('لطفا همهٔ فیلدها را پر کنید');return}
+        const users = JSON.parse(localStorage.getItem('tivana_users')||'{}');
+        if(users[email]){alert('اکانت با این ایمیل موجود است');return}
+        users[email] = {name,email,pass,created:Date.now(),data:{weights:[],photos:[]}};
+        localStorage.setItem('tivana_users', JSON.stringify(users));
+        localStorage.setItem('tivana_session', email);
+        modal.style.display='none'; refreshUI(); if(modalCallback) modalCallback();
+      } else {
+        if(!email||!pass){alert('ایمیل و گذرواژه را وارد کنید');return}
+        const users = JSON.parse(localStorage.getItem('tivana_users')||'{}');
+        if(!users[email] || users[email].pass!==pass){alert('اطلاعات ورود نادرست');return}
+        localStorage.setItem('tivana_session', email);
+        modal.style.display='none'; refreshUI(); if(modalCallback) modalCallback();
+      }
+    });
+
+    // Auth helpers
+    function getSession(){return localStorage.getItem('tivana_session')||null}
+    function isLoggedIn(){return !!getSession()}
+    function getUser(){const s=getSession(); if(!s) return null; const users=JSON.parse(localStorage.getItem('tivana_users')||'{}'); return users[s]||null}
+    function refreshUI(){
+      const user = getUser();
+      if(user){
+        $('#btn-login').style.display='none'; $('#btn-register').style.display='none';
+        // show profile quick
+        $('#profile-name').textContent = user.name;
+        $('#profile-email').textContent = user.email;
+        $('#profile-details').textContent = `ایجاد شده: ${new Date(user.created).toLocaleString('fa-IR')}`;
+        $('#avatar').textContent = user.name[0] || 'U';
+      } else {
+        $('#btn-login').style.display='inline-block'; $('#btn-register').style.display='inline-block';
+        $('#profile-name').textContent='(نام کاربر)'; $('#profile-email').textContent='(ایمیل)'; $('#profile-details').textContent='اگر وارد نشده‌اید، ابتدا ثبت‌نام یا ورود کنید.';
+        $('#avatar').textContent='U';
+      }
+    }
+
+    // logout + delete
+    $('#profile-logout').addEventListener('click', ()=>{
+      localStorage.removeItem('tivana_session'); refreshUI(); alert('خروج انجام شد');
+    });
+    $('#profile-delete').addEventListener('click', ()=>{
+      if(!confirm('آیا مطمئن هستید که می‌خواهید حساب خود را به صورت دائمی حذف کنید؟ این عمل غیرقابل بازگشت است.')) return;
+      const s = getSession(); if(!s) return alert('وارد نشده‌اید');
+      const users = JSON.parse(localStorage.getItem('tivana_users')||'{}'); delete users[s]; localStorage.setItem('tivana_users', JSON.stringify(users)); localStorage.removeItem('tivana_session'); refreshUI(); alert('اکانت حذف شد');
+    });
+
+    // calculators implementations
+    document.getElementById('calc-bmi').addEventListener('click', ()=>{
+      const h = parseFloat($('#bmi-height').value); const w = parseFloat($('#bmi-weight').value);
+      if(!h||!w){$('#bmi-result').textContent='لطفا قد و وزن را وارد کنید'; return}
+      const m = h/100; const bmi = w/(m*m); $('#bmi-result').textContent = `BMI = ${bmi.toFixed(1)} — ${bmi<18.5? 'کمبود وزن': bmi<25? 'نرمال':'اضافه وزن یا چاق'}`;
+    });
+
+    document.getElementById('calc-bmr').addEventListener('click', ()=>{
+      const gender = $('#bmr-gender').value; const h = parseFloat($('#bmr-height').value); const w = parseFloat($('#bmr-weight').value); const age = parseFloat($('#bmr-age').value);
+      if(!h||!w||!age){$('#bmr-result').textContent='لطفا تمام فیلدها را پر کنید'; return}
+      // Mifflin-St Jeor
+      let bmr = (10*w) + (6.25*h) - (5*age) + (gender==='male'?5:-161);
+      $('#bmr-result').textContent = `${Math.round(bmr)} کیلو کالری در روز`;
+    });
+
+    document.getElementById('calc-tdee').addEventListener('click', ()=>{
+      const activity = parseFloat($('#tdee-activity').value); // use previous BMR
+      const h = parseFloat($('#bmr-height').value); const w = parseFloat($('#bmr-weight').value); const age = parseFloat($('#bmr-age').value); const gender = $('#bmr-gender').value;
+      if(!h||!w||!age){$('#tdee-result').textContent='برای محاسبه TDEE، ابتدا BMR را تکمیل کنید'; return}
+      let bmr = (10*w) + (6.25*h) - (5*age) + (gender==='male'?5:-161);
+      $('#tdee-result').textContent = `${Math.round(bmr * activity)} کیلو کالری در روز`;
+    });
+
+    document.getElementById('calc-bf').addEventListener('click', ()=>{
+      const gender = $('#bf-gender').value; const h = parseFloat($('#bf-height').value); const waist = parseFloat($('#bf-waist').value); const neck = parseFloat($('#bf-neck').value);
+      if(!h||!waist||!neck){$('#bf-result').textContent='همهٔ فیلدها را پر کنید'; return}
+      // US Navy formula (cm)
+      let bf;
+      if(gender==='male'){
+        bf = 495/(1.0324 - 0.19077*Math.log10(waist-neck) + 0.15456*Math.log10(h)) - 450;
+      } else {
+        // for women needs hip; we approximate using available fields which reduces accuracy
+        bf = 495/(1.29579 - 0.35004*Math.log10(waist+ (0) - neck) + 0.22100*Math.log10(h)) - 450;
+      }
+      $('#bf-result').textContent = `≈ ${bf.toFixed(1)} % (تقریبی)`;
+    });
+
+    document.getElementById('calc-food').addEventListener('click', ()=>{
+      const c = parseFloat($('#food-cal').value); const q = parseFloat($('#food-qty').value)||1; if(!c){$('#food-result').textContent='کالری را وارد کنید'; return}
+      $('#food-result').textContent = `${(c*q).toFixed(0)} کالری`;
+    });
+
+    document.getElementById('calc-water').addEventListener('click', ()=>{
+      const w = parseFloat($('#water-weight').value); if(!w){$('#water-result').textContent='وزن را وارد کنید';return}
+      const ml = w*35; $('#water-result').textContent = `${Math.round(ml)} میلی‌لیتر ≈ ${(ml/1000).toFixed(2)} لیتر`;
+    });
+
+    document.getElementById('calc-hr').addEventListener('click', ()=>{
+      const age = parseFloat($('#hr-age').value); const rest = parseFloat($('#hr-rest').value)||70; const inten = (parseFloat($('#hr-intensity').value)||70)/100;
+      if(!age){$('#hr-result').textContent='سن را وارد کنید';return}
+      const max = 220 - age; const target = Math.round(((max - rest) * inten) + rest);
+      $('#hr-result').textContent = `حداکثر HR ≈ ${max} bpm — ضربان هدف ≈ ${target} bpm`;
+    });
+
+    // Workout generator (simple rules)
+    document.getElementById('make-workout').addEventListener('click', ()=>{
+      const goal = $('#w-goal').value; const level = $('#w-level').value;
+      let plan='';
+      if(level==='beginner'){
+        plan = goal==='bulk'? '3 روز: بالا تنه/پایین تنه/کاردیو سبک' : '3 روز: ترکیبی تمرینات با شدت متوسط و تمرکز بر سوخت چربی';
+      } else if(level==='intermediate'){
+        plan = goal==='bulk'? '5 روز: سینه/پشت/پا/شانه/بازو' : '5 روز: ترکیب قدرتی و HIIT برای چربی‌سوزی';
+      } else plan = '5 روز برنامهٔ پیشرفته با تمرکز روی افزایش حجم و شدت';
+      $('#workout-result').textContent = plan;
+    });
+
+    // Meal plan (simple sampler)
+    $('#meal-gen').addEventListener('click', ()=>{
+      const c = parseInt($('#meal-cal-target').value) || 2000;
+      $('#meal-result').textContent = `برنامهٔ نمونه برای ${c} کالری — صبح: تخم‌مرغ/جو، ناهار: مرغ/برنج، شام: سبزی/ماهی`;
+    });
+
+    // Progress logging
+    $('#log-weight-btn').addEventListener('click', ()=>{
+      const w = parseFloat($('#log-weight').value); const note = $('#log-note').value;
+      if(!isLoggedIn()){alert('برای ثبت وزن ابتدا وارد شوید'); return}
+      if(!w){alert('وزن را وارد کنید');return}
+      const user = getUser(); user.data.weights.push({ts:Date.now(),w,note});
+      // save back
+      const users = JSON.parse(localStorage.getItem('tivana_users')||'{}'); users[user.email] = user; localStorage.setItem('tivana_users', JSON.stringify(users)); $('#log-result').textContent='ثبت شد'; setTimeout(()=>$('#log-result').textContent='',2000);
+    });
+
+    // Body type
+    $('#bt-calc').addEventListener('click', ()=>{
+      const h = parseFloat($('#bt-height').value); const w = parseFloat($('#bt-weight').value); const a = $('#bt-activity').value;
+      if(!h||!w){$('#bt-result').textContent='قد و وزن را وارد کنید'; return}
+      const bmi = w/((h/100)*(h/100)); let type='';
+      if(bmi<18.5) type='اکتومورف'; else if(bmi<25) type='مزومورف'; else type='اندومورف';
+      $('#bt-result').textContent = `فرم: ${type} — پیشنهاد: ${type==='اکتومورف'? 'تمرکز روی افزایش کالری و تمرینات قدرتی': type==='مزومورف'? 'برنامه ترکیبی قدرتی-کاردیو':'تمرکز روی کالری منفی و کاردیو'}`;
+    });
+
+    // 1RM Epley
+    $('#calc-rm').addEventListener('click', ()=>{
+      const w = parseFloat($('#rm-weight').value); const r = parseFloat($('#rm-reps').value);
+      if(!w||!r){$('#rm-result').textContent='وزنه و تکرار را وارد کنید';return}
+      const rm = Math.round(w * (1 + r/30)); $('#rm-result').textContent = `1RM ≈ ${rm} kg`;
+    });
+
+    // Simple on-load: show news
+    showSection('news'); refreshUI();
+
+    // Observe sections to animate on scroll
+    const obs = new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting) e.target.classList.add('visible')})},{threshold:0.12});
+    document.querySelectorAll('main section').forEach(s=>obs.observe(s));
+
+    // keyboard: press 'p' to open profile
+    document.addEventListener('keydown', e=>{if(e.key==='p') showSection('profile')});
+
+    // If user clicks nav while not logged in and modal opens, prefill email for convenience
+    $('#btn-login').addEventListener('click', ()=>{ $('#reg-name').style.display='none'; });
+
+    // Accessibility: close modal on outside click
+    modal.addEventListener('click', (ev)=>{ if(ev.target===modal) modal.style.display='none'; });
+
+    // Quick note: this is a front-end prototype. For production you need server-side auth, DB, file storage for photos and videos, and APIs for news/shop.
+  </script>
+</body>
+</html>
