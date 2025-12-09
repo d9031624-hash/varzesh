@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>محاسبه وضعیت بدن</title>
 
 <style>
@@ -16,18 +16,11 @@ body {
     background: linear-gradient(135deg, #232931, #393E46);
     font-family: 'BNazanin', sans-serif;
     color: #EEE;
-    user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
     overflow-x: hidden;
+    scroll-behavior: smooth;
 }
 
-* {
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-/* کانتینر برنامه */
+/* کانتینر */
 .app-container {
     width: 90%;
     max-width: 420px;
@@ -43,8 +36,8 @@ body {
 h1 {
     font-size: 26px;
     margin-bottom: 25px;
-    font-weight: bold;
     color: #00ADB5;
+    font-weight: bold;
 }
 
 .input-group {
@@ -53,7 +46,7 @@ h1 {
 }
 
 label {
-    font-size: 19px;
+    font-size: 18px;
     font-weight: bold;
     display: block;
     margin-bottom: 6px;
@@ -64,37 +57,21 @@ input, select {
     padding: 12px;
     border-radius: 14px;
     border: none;
-    font-size: 18px;
-    font-family: 'BNazanin';
     background: #2C3036;
     color: #EEE;
-    outline: none;
-    transition: 0.2s;
-}
-
-input:focus, select:focus {
-    background: #3B3F45;
-    transform: scale(1.02);
+    font-size: 18px;
 }
 
 button {
     width: 100%;
     padding: 14px;
+    margin-top: 20px;
     background: #00ADB5;
     border: none;
     border-radius: 16px;
-    font-size: 22px;
-    font-weight: bold;
-    font-family: 'BNazanin';
-    margin-top: 20px;
+    color: white;
+    font-size: 20px;
     cursor: pointer;
-    transition: 0.25s;
-    color: #FFF;
-}
-
-button:hover {
-    background: #0199a0;
-    transform: scale(1.03);
 }
 
 .result-box {
@@ -102,101 +79,24 @@ button:hover {
     padding: 20px;
     background: #0F1114;
     border-radius: 18px;
-    font-size: 19px;
-    line-height: 1.9;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
-    font-weight: bold;
-    min-height: 130px;
+    font-size: 18px;
+    line-height: 1.8;
+    min-height: 120px;
 }
 
-/* انیمیشن fadeIn */
+/* انیمیشن */
 @keyframes fadeIn {
     from {opacity: 0; transform: translateY(15px);}
     to {opacity: 1; transform: translateY(0);}
 }
 
-/* لودینگ حرفه‌ای AI */
-#loadingScreen {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+/* اسکرول نرم */
+html {
+    scroll-behavior: smooth;
 }
-
-.ai-loader {
-    position: relative;
-    width: 120px;
-    height: 120px;
-}
-
-.center-glow {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 30px; height: 30px;
-    margin: -15px 0 0 -15px;
-    background: #00eaff;
-    border-radius: 50%;
-    box-shadow: 0 0 20px #00eaff, 0 0 40px #00eaff, 0 0 60px #00eaff;
-    animation: pulse 1.2s infinite alternate;
-}
-
-.orbit {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 100px; height: 100px;
-    margin: -50px 0 0 -50px;
-    border: 2px solid rgba(0, 234, 255, 0.5);
-    border-radius: 50%;
-    animation: rotateOrbit 2s linear infinite;
-}
-
-.orbit2 { width: 80px; height: 80px; margin: -40px 0 0 -40px; animation-duration: 2.5s; }
-.orbit3 { width: 60px; height: 60px; margin: -30px 0 0 -30px; animation-duration: 3s; }
-
-.ai-text {
-    position: absolute;
-    bottom: -40px;
-    width: 100%;
-    text-align: center;
-    color: #00eaff;
-    font-weight: bold;
-    font-size: 16px;
-    font-family: 'BNazanin', sans-serif;
-}
-
-@keyframes pulse {
-    from { transform: scale(1); box-shadow: 0 0 20px #00eaff,0 0 40px #00eaff,0 0 60px #00eaff; }
-    to { transform: scale(1.3); box-shadow: 0 0 30px #00eaff,0 0 60px #00eaff,0 0 90px #00eaff; }
-}
-
-@keyframes rotateOrbit {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* ریسپانسیو */
-@media (min-width: 768px) {
-    .app-container { max-width: 500px; }
-}
-@media (min-width: 1024px) {
-    .app-container { max-width: 550px; }
-}
-
 </style>
-
-<!-- قفل راست کلیک -->
-<script>
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', e => {
-    if (e.ctrlKey || e.key === "F12") e.preventDefault();
-});
-</script>
-
 </head>
+
 <body>
 
 <div class="app-container">
@@ -225,59 +125,41 @@ document.addEventListener('keydown', e => {
         </select>
     </div>
 
-    <button id="calcBtn">محاسبه</button>
+    <button onclick="calculate()">محاسبه</button>
 
     <div class="result-box" id="result">
         نتیجه اینجا نمایش داده می‌شود
     </div>
 </div>
 
-<div id="loadingScreen">
-    <div class="ai-loader">
-        <div class="center-glow"></div>
-        <div class="orbit orbit1"></div>
-        <div class="orbit orbit2"></div>
-        <div class="orbit orbit3"></div>
-        <div class="ai-text">در حال تحلیل داده‌ها...</div>
-    </div>
-</div>
-
-
 <script>
-
-    
-    
-    
-
-
-    
-    
-    
-    
-    // تابع محاسبه BMI و وضعیت بدن
 function calculate() {
     let age = parseInt(document.getElementById("age").value);
-    let height = parseInt(document.getElementById("height").value)/100;
+    let height = parseInt(document.getElementById("height").value) / 100;
     let weight = parseFloat(document.getElementById("weight").value);
     let gender = document.getElementById("gender").value;
 
-    if(!age || !height || !weight) {
+    if (!age || !height || !weight) {
         document.getElementById("result").innerText = "لطفاً همه مقادیر را وارد کنید.";
         return;
     }
 
-    let bmi = weight / (height*height);
-    let bodyFat = gender === "male" ? 1.20*bmi + 0.23*age - 16.2 : 1.20*bmi + 0.23*age - 5.4;
+    let bmi = weight / (height * height);
+    let bodyFat = gender === "male"
+        ? 1.20 * bmi + 0.23 * age - 16.2
+        : 1.20 * bmi + 0.23 * age - 5.4;
+
     bodyFat = Math.max(0, bodyFat);
 
     let idealBMI = gender === "male" ? 22 : 21;
-    let idealWeight = idealBMI * (height*height);
+    let idealWeight = idealBMI * (height * height);
     let diff = weight - idealWeight;
 
-    let status = bmi < 18.5 ? "کم‌وزن" :
-                 bmi < 25 ? "نرمال" :
-                 bmi < 30 ? "اضافه وزن" :
-                             "چاق";
+    let status =
+        bmi < 18.5 ? "کم‌وزن" :
+        bmi < 25 ? "نرمال" :
+        bmi < 30 ? "اضافه وزن" :
+        "چاق";
 
     document.getElementById("result").innerHTML = `
         <b>BMI:</b> ${bmi.toFixed(1)}<br>
@@ -287,92 +169,7 @@ function calculate() {
         <b>اختلاف وزن:</b> ${diff.toFixed(1)} کیلوگرم
     `;
 }
-
-// نمایش لودینگ قبل از محاسبه
-document.getElementById("calcBtn").addEventListener("click", ()=>{
-    document.getElementById("loadingScreen").style.display = "flex";
-
-    setTimeout(()=>{
-        document.getElementById("loadingScreen").style.display = "none";
-        calculate();
-    }, 2000); // ۲ ثانیه لودینگ
-});
-
-// غیرفعال کردن همه حالت‌های زوم
-document.addEventListener('touchmove', function(event) { if(event.scale !== 1){ event.preventDefault(); } }, { passive: false });
-let lastTouchEnd = 0;
-document.addEventListener('touchend', function(event){ let now = (new Date()).getTime(); if(now - lastTouchEnd <= 300){ event.preventDefault(); } lastTouchEnd = now; }, false);
-window.addEventListener('wheel', function(event){ if(event.ctrlKey){ event.preventDefault(); } }, { passive:false });
-document.addEventListener('keydown', function(e){ if(e.ctrlKey && (e.key==='+' || e.key==='-' || e.key==='=')){ e.preventDefault(); } });
 </script>
 
-
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const container = document.querySelector('.app-container');
-    if(!container) return;
-
-    // جلوگیری از "لرزش" هنگام اسکرول روی موبایل
-    container.addEventListener('touchstart', function(e) {
-        if(container.scrollTop === 0) container.scrollTop = 1;
-        if(container.scrollTop + container.offsetHeight === container.scrollHeight) {
-            container.scrollTop -= 1;
-        }
-    }, false);
-});
-</script>
-
-
-
-    
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const container = document.querySelector('.app-container');
-
-    if (!container) return; // اگر عنصر پیدا نشد، ادامه نده
-
-    function setContainerSize() {
-        const width = window.innerWidth;
-
-        if (width <= 767) {
-            // موبایل: کل عرض، کل ارتفاع، اسکرول فعال
-            container.style.width = '100%';
-            container.style.maxWidth = '100%';
-            container.style.height = '100%';
-            container.style.padding = '20px';
-            container.style.overflowY = 'auto';
-            container.style.boxSizing = 'border-box';
-        } else if (width >= 768 && width <= 1023) {
-            // تبلت: عرض محدود، ارتفاع محتوا
-            container.style.width = '90%';
-            container.style.maxWidth = '500px';
-            container.style.height = 'auto';
-            container.style.padding = '25px';
-            container.style.overflowY = 'auto';
-            container.style.boxSizing = 'border-box';
-        } else {
-            // لپ‌تاپ و دسکتاپ
-            container.style.width = '70%';
-            container.style.maxWidth = '600px';
-            container.style.height = 'auto';
-            container.style.padding = '30px';
-            container.style.overflowY = 'auto';
-            container.style.boxSizing = 'border-box';
-        }
-    }
-
-    // اعمال اولیه
-    setContainerSize();
-
-    // ریسایز پویا هنگام تغییر اندازه صفحه
-    window.addEventListener('resize', setContainerSize);
-});
-</script>
-
-
-
-    
 </body>
 </html>
