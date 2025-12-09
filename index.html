@@ -1,202 +1,136 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>محاسبه وضعیت بدن</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>BMI Calculator</title>
 
 <style>
-@font-face {
-    font-family: 'BNazanin';
-    src: url('https://cdn.fontcdn.ir/Font/Persian/B Nazanin/BNazanin.woff2') format('woff2');
-}
+    body {
+        font-family: sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 20px;
+        direction: rtl;
+    }
 
-body {
-    margin: 0;
-    background: linear-gradient(135deg, #232931, #393E46);
-    font-family: 'BNazanin', sans-serif;
-    color: #EEE;
-    overflow-x: hidden;
-    scroll-behavior: smooth;
-}
+    .container {
+        max-width: 400px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 14px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
 
-/* کانتینر */
-.app-container {
-    width: 90%;
-    max-width: 420px;
-    margin: 30px auto;
-    padding: 25px;
-    background: #1E2024;
-    border-radius: 22px;
-    box-shadow: 0 0 35px rgba(0,0,0,0.55);
-    text-align: center;
-    animation: fadeIn 0.7s ease;
-}
+    input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 10px;
+        border: 1px solid #bbb;
+        font-size: 17px;
+    }
 
-h1 {
-    font-size: 26px;
-    margin-bottom: 25px;
-    color: #00ADB5;
-    font-weight: bold;
-}
+    button {
+        width: 100%;
+        padding: 12px;
+        background: #1976d2;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        margin-top: 15px;
+        font-size: 18px;
+        cursor: pointer;
+    }
 
-.input-group {
-    margin-bottom: 18px;
-    text-align: right;
-}
+    #result {
+        margin-top: 20px;
+        background: #e3f2fd;
+        padding: 12px;
+        border-radius: 12px;
+        font-size: 18px;
+        line-height: 1.7;
+    }
 
-label {
-    font-size: 18px;
-    font-weight: bold;
-    display: block;
-    margin-bottom: 6px;
-}
+    /* لودینگ */
+    #loading-box {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(255,255,255,0.85);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
 
-input, select {
-    width: 100%;
-    padding: 12px;
-    border-radius: 14px;
-    border: none;
-    background: #2C3036;
-    color: #EEE;
-    font-size: 18px;
-}
+    .loader {
+        width: 70px;
+        height: 70px;
+        border: 8px solid #ccc;
+        border-top: 8px solid #1976d2;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+    }
 
-button {
-    width: 100%;
-    padding: 14px;
-    margin-top: 20px;
-    background: #00ADB5;
-    border: none;
-    border-radius: 16px;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.result-box {
-    margin-top: 25px;
-    padding: 20px;
-    background: #0F1114;
-    border-radius: 18px;
-    font-size: 18px;
-    line-height: 1.8;
-    min-height: 120px;
-}
-
-/* انیمیشن */
-@keyframes fadeIn {
-    from {opacity: 0; transform: translateY(15px);}
-    to {opacity: 1; transform: translateY(0);}
-}
-
-/* اسکرول نرم */
-html {
-    scroll-behavior: smooth;
-}
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 </style>
 </head>
 
 <body>
 
-<div class="app-container">
-    <h1>محاسبه وضعیت بدن</h1>
-
-    <div class="input-group">
-        <label>سن:</label>
-        <input type="number" id="age" placeholder="مثال: 25">
-    </div>
-
-    <div class="input-group">
-        <label>قد (سانتی‌متر):</label>
-        <input type="number" id="height" placeholder="مثال: 170">
-    </div>
-
-    <div class="input-group">
-        <label>وزن (کیلوگرم):</label>
-        <input type="number" id="weight" placeholder="مثال: 70">
-    </div>
-
-    <div class="input-group">
-        <label>جنسیت:</label>
-        <select id="gender">
-            <option value="male">مرد</option>
-            <option value="female">زن</option>
-        </select>
-    </div>
-
-    <button onclick="calculate()">محاسبه</button>
-
-    <div class="result-box" id="result">
-        نتیجه اینجا نمایش داده می‌شود
-    </div>
+<div id="loading-box">
+    <div class="loader"></div>
 </div>
 
+<div class="container">
+    <h2>محاسبه‌گر BMI</h2>
 
+    <label>قد (سانتی‌متر):</label>
+    <input id="height" type="number" placeholder="مثال: 170">
+
+    <label>وزن (کیلوگرم):</label>
+    <input id="weight" type="number" placeholder="مثال: 70">
+
+    <button onclick="startCalc()">محاسبه</button>
+
+    <div id="result"></div>
+</div>
 
 <script>
-/* جلوگیری از زوم با دو انگشت در موبایل */
-document.addEventListener('touchmove', function (event) {
-    if (event.scale !== 1) {
-        event.preventDefault();
-    }
-}, { passive: false });
+function startCalc() {
+    document.getElementById("loading-box").style.display = "flex";
 
-/* جلوگیری از زوم با Ctrl + scroll در کامپیوتر */
-window.addEventListener('wheel', function (event) {
-    if (event.ctrlKey) {
-        event.preventDefault();
-    }
-}, { passive: false });
+    setTimeout(() => {
+        calcBMI();
+        document.getElementById("loading-box").style.display = "none";
+    }, 2000);
+}
 
-/* جلوگیری از زوم با Ctrl + (+ - =) */
-document.addEventListener('keydown', function (e) {
-    if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=')) {
-        e.preventDefault();
-    }
-});
-</script>
+function calcBMI() {
+    const h = parseFloat(document.getElementById("height").value);
+    const w = parseFloat(document.getElementById("weight").value);
 
-
-
-    
-    
-<script>
-function calculate() {
-    let age = parseInt(document.getElementById("age").value);
-    let height = parseInt(document.getElementById("height").value) / 100;
-    let weight = parseFloat(document.getElementById("weight").value);
-    let gender = document.getElementById("gender").value;
-
-    if (!age || !height || !weight) {
-        document.getElementById("result").innerText = "لطفاً همه مقادیر را وارد کنید.";
+    if (!h || !w || h <= 0 || w <= 0) {
+        document.getElementById("result").innerHTML =
+            "لطفاً اطلاعات را درست وارد کنید.";
         return;
     }
 
-    let bmi = weight / (height * height);
-    let bodyFat = gender === "male"
-        ? 1.20 * bmi + 0.23 * age - 16.2
-        : 1.20 * bmi + 0.23 * age - 5.4;
+    const heightM = h / 100;
+    const bmi = (w / (heightM * heightM)).toFixed(2);
 
-    bodyFat = Math.max(0, bodyFat);
+    let status = "";
+    if (bmi < 18.5) status = "کمبود وزن";
+    else if (bmi < 25) status = "نرمال";
+    else if (bmi < 30) status = "اضافه وزن";
+    else status = "چاقی";
 
-    let idealBMI = gender === "male" ? 22 : 21;
-    let idealWeight = idealBMI * (height * height);
-    let diff = weight - idealWeight;
-
-    let status =
-        bmi < 18.5 ? "کم‌وزن" :
-        bmi < 25 ? "نرمال" :
-        bmi < 30 ? "اضافه وزن" :
-        "چاق";
-
-    document.getElementById("result").innerHTML = `
-        <b>BMI:</b> ${bmi.toFixed(1)}<br>
-        <b>درصد چربی بدن:</b> ${bodyFat.toFixed(1)}%<br>
-        <b>وضعیت:</b> ${status}<br>
-        <b>وزن ایده‌آل:</b> ${idealWeight.toFixed(1)} کیلوگرم<br>
-        <b>اختلاف وزن:</b> ${diff.toFixed(1)} کیلوگرم
-    `;
+    document.getElementById("result").innerHTML =
+        "BMI شما: <b>" + bmi + "</b><br>وضعیت: " + status;
 }
 </script>
 
