@@ -1,254 +1,136 @@
-<!--
-پکیج: دو فایل لازم است (یک سرور PHP نیاز دارد):
-1) index.html  -> فایل فرانت‌اند (این فایل)
-2) proxy.php   -> فایل پی‌اچ‌پی که RSSها را می‌گیرد، یکپارچه می‌کند و JSON خروجی می‌دهد
-
-نکته‌ها:
-- فایل proxy.php از یک آرایه RSS استفاده می‌کند؛ آدرس‌های RSS را خودتان جایگزین کنید یا همان نمونه‌ها را نگه دارید.
-- proxy.php کش ساده فایل دارد تا از بارگذاری بیش از حد جلوگیری کند (TTL پیش‌فرض 15 ثانیه).
-- صفحه فرانت‌اند هر 20 ثانیه به صورت کامل رفرش می‌شود (location.reload()) تا «صفحه واقعاً رفرش» انجام شود.
-- اگر سرور شما CORS نداشت، فایل index.html و proxy.php را روی یک دامین/سرور قرار دهید.
-- برای نمایش تصاویر، proxy سعی می‌کند از <enclosure>، media:content یا تگ img داخل توضیحات عکس را استخراج کند.
-
-راهنما: هر دو فایل را در یک پوشه روی هاست با PHP (مثلاً /public_html/news/) قرار دهید.
-
--->
-
-<!-- ===== index.html ===== -->
 <!doctype html>
 <html lang="fa">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>سایت خبری - فقط اخبار ایران (ریفرش ۲۰ ثانیه)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>اخبار ایران — ساده</title>
   <style>
-    body{font-family: Tahoma, Arial; background:#f5f7fb; color:#111; margin:0; padding:0}
-    header{background:#0b6; padding:14px 18px; color:#042; display:flex; align-items:center; justify-content:space-between}
-    header h1{margin:0; font-size:18px}
-    .container{max-width:980px; margin:18px auto; padding:0 12px}
-    .card{background:#fff; border-radius:10px; box-shadow:0 4px 12px rgba(10,10,10,0.06); padding:12px; margin-bottom:12px; display:flex; gap:12px}
-    .thumb{width:150px; min-width:120px; height:90px; overflow:hidden; border-radius:8px}
-    .thumb img{width:100%; height:100%; object-fit:cover}
+    :root{font-family: Vazir, Tahoma, Arial;}
+    body{margin:0;background:#f7f7f8;color:#111;display:flex;flex-direction:column;align-items:center}
+    header{width:100%;background:#fff;border-bottom:1px solid #e5e5e5;padding:12px 16px;box-shadow:0 1px 0 rgba(0,0,0,0.03)}
+    .wrap{max-width:980px;width:100%;padding:12px}
+    h1{margin:0;font-size:18px}
+    #last-refresh{color:#666;font-size:13px;margin-top:6px}
+    main{width:100%;padding:12px}
+    .card{background:#fff;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,0,0,0.04);display:flex;gap:12px}
+    .thumb{width:120px;flex:0 0 120px;overflow:hidden;border-radius:6px}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
     .meta{flex:1}
-    .title{font-weight:700; margin:0 0 6px 0}
-    .desc{color:#444; font-size:14px; margin:0 0 8px 0}
-    .info{font-size:12px; color:#666}
-    footer{padding:10px 18px; text-align:center; color:#666}
-    .loader{display:inline-block; padding:6px 10px; background:#fff7; border-radius:6px}
-    .controls{display:flex; gap:10px; align-items:center}
-    .small{font-size:13px}
-    @media (max-width:600px){.card{flex-direction:column}.thumb{width:100%; height:200px}}
+    .title{font-weight:700;margin:0 0 6px}
+    .desc{color:#333;margin:0 0 8px;font-size:14px}
+    .source{font-size:13px;color:#666}
+    footer{padding:16px;color:#888;font-size:13px}
+    .loading{padding:24px;text-align:center;color:#666}
   </style>
 </head>
 <body>
   <header>
-    <h1>اخبار ایران — بروزرسانی خودکار هر ۲۰ ثانیه</h1>
-    <div class="controls small">
-      <div id="lastUpdate">بارگذاری...</div>
-      <div class="loader" id="countdown">۲۰</div>
+    <div class="wrap">
+      <h1>اخبار ایران (به‌روز هر ۲۰ ثانیه)</h1>
+      <div id="last-refresh">در حال بارگذاری...</div>
     </div>
   </header>
+  <main class="wrap" id="feed">
+    <div class="loading">لطفاً کمی صبر کنید — خبرها در حال بارگیری‌اند...</div>
+  </main>
+  <footer class="wrap">منابع: خبرگزاری‌های ایرانی (IRNA، ایسنا، فارس، تسنیم و غیره)</footer>
 
-  <div class="container" id="newsList">
-    <!-- اخبار اینجا درج می‌شود -->
-  </div>
+  <script>
+    // لیست RSS خبرگزاری‌های ایرانی — اگر خواستید منبع اضافه کنید فقط URL را اضافه کنید
+    const RSS_SOURCES = [
+      {name: 'IRNA', url: 'https://www.irna.ir/rss'},
+      {name: 'ISNA', url: 'https://www.isna.ir/feed'},
+      {name: 'Fars', url: 'https://www.farsnews.ir/rss'},
+      {name: 'Tasnim', url: 'https://www.tasnimnews.com/fa/rss/allnews'},
+      // در صورت نیاز منابع دیگر را اینجا اضافه کنید
+    ];
 
-  <footer>
-    سایت نمونه — منابع از RSS سایت‌های ایرانی دریافت می‌شود.
-  </footer>
-
-<script>
-const API = './proxy.php'; // مسیر به proxy.php
-const REFRESH_SECONDS = 20; // هر ۲۰ ثانیه صفحه کاملاً رفرش شود
-let timer = REFRESH_SECONDS;
-
-function formatDate(d){
-  try{ const dt = new Date(d); return dt.toLocaleString('fa-IR'); }catch(e){return d}
-}
-
-async function loadNews(){
-  try{
-    const res = await fetch(API + '?format=json');
-    if(!res.ok) throw new Error('خطا هنگام گرفتن اخبار');
-    const data = await res.json();
-    const container = document.getElementById('newsList');
-    container.innerHTML = '';
-    document.getElementById('lastUpdate').textContent = 'بارگذاری: ' + formatDate(new Date());
-
-    if(!data.items || data.items.length===0){
-      container.innerHTML = '<p>خبری یافت نشد.</p>';
-      return;
+    // برای دور زدن محدودیت CORS از allorigins استفاده می‌کنیم
+    // اگر می‌خواهید در سرور واقعی بهتر شود بهتر است یک پروکسی سرور یا تابع سرور (Cloud Function) درست کنید
+    function corsFetch(url){
+      const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+      return fetch(proxy).then(r => {
+        if(!r.ok) throw new Error('خطا در دریافت RSS');
+        return r.text();
+      });
     }
 
-    for(const item of data.items){
-      const card = document.createElement('article');
-      card.className = 'card';
-
-      const thumb = document.createElement('div'); thumb.className='thumb';
-      const img = document.createElement('img'); img.alt = item.title || '';
-      img.src = item.image || 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="100%" height="100%" fill="%23ddd"/></svg>';
-      thumb.appendChild(img);
-
-      const meta = document.createElement('div'); meta.className='meta';
-      const title = document.createElement('h2'); title.className='title';
-      const a = document.createElement('a'); a.href = item.link; a.target='_blank'; a.rel='noopener'; a.textContent = item.title || 'بدون عنوان';
-      title.appendChild(a);
-
-      const desc = document.createElement('p'); desc.className='desc'; desc.innerHTML = item.description || '';
-      const info = document.createElement('div'); info.className='info';
-      info.textContent = (item.source ? item.source + ' — ' : '') + (item.pubDate ? formatDate(item.pubDate) : '');
-
-      meta.appendChild(title); meta.appendChild(desc); meta.appendChild(info);
-
-      card.appendChild(thumb); card.appendChild(meta);
-      container.appendChild(card);
+    async function fetchFeed(source){
+      try{
+        const xmlText = await corsFetch(source.url);
+        const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+        const items = Array.from(doc.querySelectorAll('item')).map(item => {
+          const title = item.querySelector('title')?.textContent || '';
+          const link = item.querySelector('link')?.textContent || item.querySelector('guid')?.textContent || '';
+          const pub = item.querySelector('pubDate')?.textContent || item.querySelector('dc\\:date')?.textContent || '';
+          // تصویر را در چند مکان ممکن است قرار دهند
+          let image = '';
+          const media = item.querySelector('media\\:content, enclosure');
+          if(media && media.getAttribute) image = media.getAttribute('url') || '';
+          if(!image){
+            // گاهی در توضیحات <img> وجود دارد
+            const desc = item.querySelector('description')?.textContent || '';
+            const m = desc.match(/<img[^>]+src="([^"]+)"/i);
+            if(m) image = m[1];
+          }
+          const description = item.querySelector('description')?.textContent || '';
+          return {title, link, pubDate: new Date(pub || Date.now()), image, description, source: source.name};
+        });
+        return items;
+      }catch(e){
+        console.warn('خطا در دریافت از', source.name, e);
+        return [];
+      }
     }
-  }catch(err){
-    document.getElementById('newsList').innerHTML = '<p>خطا در دریافت اخبار: '+ err.message +'</p>';
-  }
-}
 
-// شمارش معکوس برای نمایش در هدر
-function startCountdown(){
-  const el = document.getElementById('countdown');
-  setInterval(()=>{
-    timer--; if(timer<=0) timer = REFRESH_SECONDS;
-    el.textContent = timer;
-  },1000);
-}
+    async function loadAll(){
+      const feedEl = document.getElementById('feed');
+      feedEl.innerHTML = '<div class="loading">در حال بارگیری خبرها...</div>';
+      const all = await Promise.all(RSS_SOURCES.map(s => fetchFeed(s)));
+      const merged = all.flat().filter(Boolean);
+      if(merged.length===0){
+        feedEl.innerHTML = '<div class="loading">خبر جدیدی پیدا نشد یا سرویس پروکسی در دسترس نیست.</div>';
+        return;
+      }
+      // مرتب‌سازی بر اساس تاریخ
+      merged.sort((a,b) => b.pubDate - a.pubDate);
+      // نمایش آخرین 40 خبر
+      const list = merged.slice(0,40).map(item => {
+        return `\n        <article class="card">\n          <div class="thumb">${item.image?`<a href="${item.link}" target="_blank" rel="noopener"><img src="${item.image}" alt=""></a>`:'<div style="width:100%;height:100%;background:#eee;display:flex;align-items:center;justify-content:center;color:#999">عکس ندارد</div>'}</div>\n          <div class="meta">\n            <h2 class="title"><a href="${item.link}" target="_blank" rel="noopener">${escapeHtml(item.title)}</a></h2>\n            <p class="desc">${truncate(stripTags(item.description),220)}</p>\n            <div class="source">${formatDate(item.pubDate)} — ${item.source}</div>\n          </div>\n        </article>\n        `;
+      }).join('');
+      feedEl.innerHTML = list;
+      document.getElementById('last-refresh').textContent = 'آخرین بروزرسانی: ' + formatDate(new Date()) + ' — صفحه هر ۲۰ ثانیه رفرش می‌شود.';
+    }
 
-// بار اول داده‌ها را با AJAX بگیر تا کاربر دیده شود، سپس صفحهٔ کامل هر 20 ثانیه رفرش شود
-loadNews(); startCountdown();
-setTimeout(()=>{
-  // رفرش کامل صفحه — «صفحه واقعاً رفرش شود»
-  setInterval(()=>{
-    location.reload();
-  }, REFRESH_SECONDS * 1000);
-}, 1500);
+    function stripTags(html){
+      return html.replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+    }
+    function truncate(text, n){ return text.length>n?text.slice(0,n-1)+'…':text }
+    function formatDate(d){
+      if(!(d instanceof Date)) d = new Date(d);
+      return d.toLocaleString('fa-IR', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    }
+    function escapeHtml(str){
+      return str.replace(/[&<>"]+/g, function(s){
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s])||s;
+      });
+    }
 
-</script>
+    // بارگذاری اولیه
+    loadAll();
+
+    // درخواست کاربر: صفحه واقعا رفرش شود هر ۲۰ ثانیه
+    // اگر می‌خواهید به‌جای رفرش کامل فقط محتوا آپدیت شود، خط بعدی را حذف کنید
+    setInterval(()=>{
+      // انیمیشن سریع قبل از رفرش
+      document.body.style.transition = 'opacity 0.4s';
+      document.body.style.opacity = '0';
+      setTimeout(()=>location.reload(), 450);
+    }, 20000);
+
+    // نکته: اگر می‌خواهید بدون رفرش کامل هر 20 ثانیه آپدیت درون صفحه انجام شود، از کد زیر استفاده کنید:
+    // setInterval(loadAll, 20000);
+
+  </script>
 </body>
 </html>
-
-
-<!-- ===== proxy.php ===== -->
-<?php
-/*
-فایل: proxy.php
-نحوه استفاده: همین فایل را با نام proxy.php در کنار index.html آپلود کنید.
-این پروکسی فهرستی از RSSها را می‌گیرد، آنها را پارس کرده و JSON خروجی می‌دهد.
-دقت: هاست یا سرور باید PHP فعال داشته باشد (نسخه 7+ توصیه می‌شود).
-*/
-
-if(php_sapi_name() == 'cli-server'){
-    // برای سرور توسعه داخلی php
-}
-
-// تنظیمات
-$cache_file = __DIR__ . '/news_cache.json';
-$cache_ttl = 15; // ثانیه
-$rss_list = array(
-    // نمونه آدرس‌های RSS (در صورت نیاز آدرس‌ها را جایگزین کنید)
-    'https://www.irna.ir/rss',
-    'https://www.tasnimnews.com/fa/rss/allnews',
-    'https://www.mehrnews.com/rss',
-    'https://www.isna.ir/rss',
-    // اضافه کنید: RSS سایت‌هایی که می‌خواهید
-);
-
-if(isset($_GET['format']) && $_GET['format'] === 'json'){
-    header('Content-Type: application/json; charset=utf-8');
-
-    // کش ساده
-    if(file_exists($cache_file)){
-        $meta = json_decode(file_get_contents($cache_file), true);
-        if($meta && isset($meta['fetched_at']) && (time() - $meta['fetched_at'] < $cache_ttl)){
-            echo json_encode($meta['data']); exit;
-        }
-    }
-
-    $items = array();
-    foreach($rss_list as $feed_url){
-        $content = @file_get_contents($feed_url);
-        if(!$content) continue;
-        libxml_use_internal_errors(true);
-        $xml = @simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
-        if(!$xml) continue;
-
-        $ns_media = $xml->getNamespaces(true);
-        $channel = null;
-        if(isset($xml->channel)) $channel = $xml->channel;
-        else $channel = $xml;
-
-        $sourceName = '';
-        if(isset($channel->title)) $sourceName = (string)$channel->title;
-
-        $entries = array();
-        if(isset($channel->item)) $entries = $channel->item;
-        elseif(isset($xml->entry)) $entries = $xml->entry; // atom
-
-        foreach($entries as $e){
-            $title = (string)$e->title;
-            $link = '';
-            if(isset($e->link) && (string)$e->link){
-                $link = (string)$e->link;
-            }else{
-                // atom link
-                if(isset($e->link['href'])) $link = (string)$e->link['href'];
-            }
-            $pubDate = '';
-            if(isset($e->pubDate)) $pubDate = (string)$e->pubDate;
-            if(isset($e->published) && !$pubDate) $pubDate = (string)$e->published;
-            $description = '';
-            if(isset($e->description)) $description = (string)$e->description;
-            if(isset($e->summary) && !$description) $description = (string)$e->summary;
-
-            // تصویر: اولویت: enclosure -> media:content -> داخل description
-            $image = '';
-            if(isset($e->enclosure) && isset($e->enclosure['url'])) $image = (string)$e->enclosure['url'];
-            else {
-                // media:content
-                foreach($ns_media as $k=>$v){
-                    $m = $e->children($v);
-                    if(isset($m->content) && isset($m->content->attributes()->url)){
-                        $image = (string)$m->content->attributes()->url; break;
-                    }
-                }
-            }
-            if(!$image){
-                // جستجوی تصویر در تگ img داخل description
-                if(preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $description, $m)){
-                    $image = $m[1];
-                }
-            }
-
-            $items[] = array(
-                'title'=>$title,
-                'link'=>$link,
-                'pubDate'=>$pubDate,
-                'description'=>$description,
-                'image'=>$image,
-                'source'=>$sourceName,
-            );
-        }
-    }
-
-    // مرتب‌سازی بر اساس تاریخ انتشار (جدید به قدیم)
-    usort($items, function($a,$b){
-        $ta = strtotime($a['pubDate']); $tb = strtotime($b['pubDate']);
-        return $tb <=> $ta;
-    });
-
-    $out = array('items'=>$items);
-    // ذخیره کش
-    file_put_contents($cache_file, json_encode(array('fetched_at'=>time(),'data'=>$out)));
-
-    echo json_encode($out, JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-// اگر بدون پارامتر فرمت فراخوانی شد، یک پیام ساده نشان بده
-?><!doctype html>
-<html lang="fa"><head><meta charset="utf-8"><title>Proxy</title></head><body>
-<p>این فایل پروکسی RSS است. برای دریافت JSON از ?format=json استفاده کنید.</p>
-</body></html>
